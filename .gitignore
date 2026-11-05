@@ -1,0 +1,10 @@
+data/
+external/
+code/ext_tmp/
+tmp_ext/
+bin/
+code/kplex
+code/kplex[0-9]*
+*.o
+.DS_Store
+__pycache__/
