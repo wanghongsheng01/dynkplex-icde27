@@ -1,0 +1,2 @@
+fallbacks=0 levelReuse=2029 checks=196042 bad=0 certChecks=698441 certBad=0 pendingInvariantBad=0 lazymcBad=0
+./stress 3000 11  18.27s user 0.05s system 97% cpu 18.858 total

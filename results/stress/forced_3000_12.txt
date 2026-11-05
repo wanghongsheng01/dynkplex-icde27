@@ -1,0 +1,2 @@
+fallbacks=46935 levelReuse=1952 checks=196082 bad=0 certChecks=650828 certBad=0 pendingInvariantBad=0 lazymcBad=0
+env STRESS_BUDGET=1e-9 STRESS_EVERY=1 ./stress 3000 12  19.87s user 0.05s system 99% cpu 19.995 total

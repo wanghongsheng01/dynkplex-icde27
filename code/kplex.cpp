@@ -544,7 +544,7 @@ static bool extGlobal() { return extEngine() && getenv("KPLEX_EXT_GLOBAL"); }
 
 // ---------------------------------------------------------------- dynamic maintenance
 struct DynStats {
-  long long ins = 0, del = 0, insSeeded = 0, insGrow = 0, delHit = 0, delRepairLocal = 0, delRepairSwap = 0, delGlobal = 0, delShrink = 0, cacheBuilds = 0, cacheSub = 0, invalidated = 0, warmWitness = 0, cacheSubInv = 0, levelReuse = 0, fallbacks = 0, invPassed = 0;
+  long long ins = 0, del = 0, insSeeded = 0, insGrow = 0, delHit = 0, delRepairLocal = 0, delRepairSwap = 0, delGlobal = 0, delShrink = 0, cacheBuilds = 0, cacheSub = 0, invalidated = 0, warmWitness = 0, cacheSubInv = 0, levelReuse = 0, fallbacks = 0, invPassed = 0, coreSubN = 0;
   double tIns = 0, tDel = 0, tGlobal = 0;
   long long nodes = 0;
 };
@@ -786,22 +786,25 @@ struct DynKPlex {
   void setBest(const vector<int> &b) { for (int x : best) inBest[x] = 0; best = b; for (int x : best) inBest[x] = 1; }
   int omega() const { return (int)best.size(); }
   // Time budget (KPLEX_BUDGET = c, default 1, with an external engine only): the local searches of
-  // one update may spend at most c times the last static solve; past that, the update falls back to
-  // one exact static solve. KPLEX_NOBUDGET disables it.
+  // one update may spend at most c times the wall time of the last external solver call (export,
+  // load, solve); past that, the update falls back to one exact external solve restricted to the
+  // vertices with core >= t-k, which contain every k-plex of size >= t. KPLEX_NOBUDGET disables it.
   double stEst = 0;
   bool useBudget = extEngine() && !getenv("KPLEX_NOBUDGET");
   double budgetC = getenv("KPLEX_BUDGET") ? atof(getenv("KPLEX_BUDGET")) : 1.0;
   void arm() { if (useBudget && stEst > 0) g_deadline = Clock::now() + chrono::duration_cast<Clock::duration>(chrono::duration<double>(budgetC * stEst)); }
   static void disarm() { g_deadline = Clock::time_point::max(); }
-  vector<int> fallbackSolve() {
+  vector<int> fallbackSolve(int t) {  // a maximum k-plex of G[{core >= t-k}]; its size is >= t iff omega_k(G) >= t
     disarm();
-    StaticStats st; vector<int> b = solveExact(G, k, true, st);
-    stEst = st.time; ds.fallbacks++;
+    ds.fallbacks++;
+    g_lastExtWall = 0;
+    vector<int> b = solveOnCore(t);
+    if (g_lastExtWall > 0) stEst = g_lastExtWall;
     return b;
   }
   void init() {
     StaticStats st; setBest(solveExact(G, k, true, st));
-    if (extEngine()) stEst = st.time;
+    if (extEngine()) stEst = g_lastExtWall;
     if (useCoreMaint) { cmt = new CoreMaint(G); cmt->init(); }
     else if (useCoreUB) { coreB = coreDecomp(G, k).core; insSince = 0; }
     if (useCache && useWarm) warmCache();
@@ -983,9 +986,24 @@ struct DynKPlex {
     bool ab = false;
     arm();
     if (seeded(u, v, omega() + 1, out, &ab)) { setBest(out); ds.insGrow++; }
-    else if (ab) { vector<int> b = fallbackSolve(); if ((int)b.size() > omega()) { setBest(b); ds.insGrow++; } }
+    else if (ab) { vector<int> b = fallbackSolve(omega() + 1); if ((int)b.size() > omega()) { setBest(b); ds.insGrow++; } }
     disarm();
     ds.tIns += secs(t0);
+  }
+  // BasicX: whole-graph re-solve by the official solver. KPLEX_EXT_CORESUB (BasicX+): pass only the
+  // vertices with core >= t-k (exact with KPLEX_CORE), which contain every k-plex of size >= t.
+  bool coreSub = getenv("KPLEX_EXT_CORESUB") != nullptr;
+  vector<int> extSolveWhole() { StaticStats st; return solveExact(G, k, true, st); }
+  vector<int> solveOnCore(int t) {
+    vector<int> P, loc(G.n, -1);
+    for (int x = 0; x < G.n; x++) if (ub(x) >= t - k) { loc[x] = (int)P.size(); P.push_back(x); }
+    if ((int)P.size() < t) return {};
+    DynGraph R((int)P.size());
+    for (int i = 0; i < R.n; i++) for (int y : G.adj[P[i]]) if (loc[y] >= 0) { R.adj[i].push_back(loc[y]); if (loc[y] > i) R.m++; }
+    StaticStats st; vector<int> b = solveExact(R, k, true, st);
+    for (int &x : b) x = P[x];
+    ds.coreSubN += R.n;
+    return b;
   }
   bool useRepair = getenv("KPLEX_REPAIR") != nullptr;
   bool repair(int u, int v, bool *ab = nullptr) {
@@ -1025,11 +1043,11 @@ struct DynKPlex {
         auto tg = Clock::now();
         ds.delGlobal++;
         vector<int> b;
-        if (extGlobal()) { disarm(); ab = false; StaticStats st; b = solveExact(G, k, true, st); if ((int)b.size() < w) b.clear(); }
+        if (extGlobal()) { disarm(); ab = false; b = coreSub ? solveOnCore(w) : extSolveWhole(); if ((int)b.size() < w) b.clear(); }
         else if (useCache) b = ab ? vector<int>{} : globalFind(w, &ab);
         else { disarm(); ab = false; StaticStats st; b = staticSolve(G, k, w - 1, true, st); ds.nodes += st.nodes; }
         disarm();
-        if (ab) { b = fallbackSolve(); if ((int)b.size() < w) b.clear(); }
+        if (ab) { b = fallbackSolve(w); if ((int)b.size() < w) b.clear(); }
         ds.tGlobal += secs(tg);
         if (!b.empty()) setBest(b);
         else {
@@ -1468,12 +1486,12 @@ static int modeDynT(int argc, char **argv) {
          "\"t_ins_s\":%.4f,\"t_del_s\":%.4f,\"t_global_s\":%.4f,\"samples\":%lld,\"st_avg_ms\":%.3f,\"warm_avg_ms\":%.3f,"
          "\"speedup_vs_st\":%.1f,\"speedup_vs_warm\":%.1f,\"mismatch\":%lld,\"invalid\":%lld,"
          "\"core_alg\":\"%s\",\"core_s\":%.4f,\"core_visited\":%lld,\"core_relabels\":%lld,\"static_engine\":\"%s\","
-         "\"seed\":%u,\"st_wall_ms\":%.3f,\"cache_sub_inv\":%lld,\"level_reuse\":%lld,\"fallbacks\":%lld,\"inv_passes\":%lld,\"m_capped\":%d,\"dyn_p999_us\":%.2f,\"truncated\":%d,\"run_s\":%.1f}\n",
+         "\"seed\":%u,\"st_wall_ms\":%.3f,\"cache_sub_inv\":%lld,\"level_reuse\":%lld,\"fallbacks\":%lld,\"inv_passes\":%lld,\"m_capped\":%d,\"dyn_p999_us\":%.2f,\"truncated\":%d,\"run_s\":%.1f,\"coresub_n\":%lld}\n",
          path.c_str(), G.n, G.m, k, stream.c_str(), lat.size(), omega0, D.omega(), initTime, dynTotal, dynAvg * 1e6, pct(lat, 0.5) * 1e6, pct(lat, 0.99) * 1e6,
          lat.empty() ? 0 : *max_element(lat.begin(), lat.end()) * 1e3, s.ins, s.insSeeded, s.insGrow, s.del, s.delHit, s.delRepairLocal, s.delRepairSwap, s.delGlobal, s.delShrink, s.cacheBuilds, s.cacheSub, s.invalidated, s.warmWitness,
          s.tIns, s.tDel, s.tGlobal, samples, stAvg * 1e3, warmAvg * 1e3, dynAvg > 0 ? stAvg / dynAvg : 0, dynAvg > 0 ? warmAvg / dynAvg : 0, mismatches, invalid,
          cm ? (cm->ordered ? "order" : "trav") : "none", cm ? cm->secs : 0.0, cm ? cm->visited : 0LL, cm ? cm->relabels : 0LL, extEngine() ? extEngine() : "ours",
-         seed, stWall * 1e3, s.cacheSubInv, s.levelReuse, s.fallbacks, s.invPassed, D.cappedM(), pct(lat, 0.999) * 1e6, truncated, secs(tRun));
+         seed, stWall * 1e3, s.cacheSubInv, s.levelReuse, s.fallbacks, s.invPassed, D.cappedM(), pct(lat, 0.999) * 1e6, truncated, secs(tRun), s.coreSubN);
   return 0;
 }
 
