@@ -20,14 +20,15 @@ for g in $graphs; do
   # static solvers
   for e in mcbrb pmc; do KPLEX_EXT=$e ./kplex ext ../data/$g.txt 1 >> $R/static.jsonl 2>> $R/static.log || true; done
   for k in 2 3; do for e in kpex kplext; do KPLEX_EXT=$e ./kplex ext ../data/$g.txt $k >> $R/static.jsonl 2>> $R/static.log || true; done; done
-  for k in 1 2 3; do for sq in "rand 10000 2500" "delins 10000 5000"; do
+  # k = 1, 2, 3 run in parallel (separate temp dirs); each run is capped at KPLEX_RUN_CAP_S seconds
+  for k in 1 2 3; do ( export KPLEX_EXT_DIR=$PWD/../tmp_ext/k$k; mkdir -p $KPLEX_EXT_DIR; for sq in "rand 10000 2500" "delins 10000 5000"; do
     set -- $sq
     # CertKP (local searches with our engine, time budget, fallback to the official solver)
-    KPLEX_EXT=$(eng $k) KPLEX_REPAIR=1 KPLEX_CACHE=1 KPLEX_CORE=1 ./kplex dyn ../data/$g.txt $k $1 $2 3 $3 >> $R/${1}_full.jsonl 2>> $R/dyn.log || true
+    KPLEX_EXT=$(eng $k) KPLEX_REPAIR=1 KPLEX_CACHE=1 KPLEX_CORE=1 ./kplex dyn ../data/$g.txt $k $1 $2 3 $3 >> $R/${1}_full_k$k.jsonl 2>> $R/dyn_k$k.log || true
     # BasicX (every harmful deletion re-solved by the official solver)
-    KPLEX_EXT=$(eng $k) KPLEX_EXT_GLOBAL=1 ./kplex dyn ../data/$g.txt $k $1 $2 3 $3 >> $R/${1}_basicx.jsonl 2>> $R/dyn.log || true
+    KPLEX_EXT=$(eng $k) KPLEX_EXT_GLOBAL=1 ./kplex dyn ../data/$g.txt $k $1 $2 3 $3 >> $R/${1}_basicx_k$k.jsonl 2>> $R/dyn_k$k.log || true
     # LazyMC (k = 1; whole-graph searches by MC-BRB, warm-up capped at 600 s)
-    [ $k = 1 ] && { KPLEX_EXT=mcbrb KPLEX_EXT_GLOBAL=1 KPLEX_NOBUDGET=1 KPLEX_ALGO=lazymc KPLEX_LAZY_MCAP_S=600 ./kplex dyn ../data/$g.txt 1 $1 $2 3 $3 >> $R/${1}_lazymc.jsonl 2>> $R/dyn.log || true; }
-  done; done
+    [ $k = 1 ] && { KPLEX_EXT=mcbrb KPLEX_EXT_GLOBAL=1 KPLEX_NOBUDGET=1 KPLEX_ALGO=lazymc KPLEX_LAZY_MCAP_S=600 ./kplex dyn ../data/$g.txt 1 $1 $2 3 $3 >> $R/${1}_lazymc.jsonl 2>> $R/dyn_k$k.log || true; }
+  done ) & done; wait
 done
 echo "done: results in $R"
