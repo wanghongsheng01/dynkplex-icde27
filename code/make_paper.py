@@ -14,6 +14,11 @@ import matplotlib.pyplot as plt
 
 R = "../results"
 P = "../paper"
+
+
+def ratio(x):
+    return f"{x:.1f}" if x >= 10 else f"{x:.2f}"
+
 NAME = {"email-Enron": "Enron", "ca-AstroPh": "AstroPh", "soc-Epinions1": "Epinions", "sx-mathoverflow": "MathOverflow",
         "sx-askubuntu": "AskUbuntu", "com-dblp.ungraph": "DBLP", "com-youtube.ungraph": "YouTube", "wiki-Talk": "WikiTalk",
         "soc-pokec-relationships": "Pokec", "soc-LiveJournal1": "LiveJournal"}
@@ -155,11 +160,11 @@ for r in allrows:
         ds.setdefault(gname(r["graph"]), {"n": r["n"], "m": r["m"], "om": {}})["om"].setdefault(r["k"], r["omega0"])
 for r in load(f"{R}/external/lj_static.jsonl"):
     ds.setdefault(gname(r["graph"]), {"n": r["n"], "m": r["m"], "om": {}})["om"][r["k"]] = r["omega"]
-kind = {"email-Enron": "communication", "ca-AstroPh": "collaboration", "soc-Epinions1": "trust", "sx-mathoverflow": "Q\\&A, temporal",
-        "sx-askubuntu": "Q\\&A, temporal", "com-dblp.ungraph": "collaboration", "com-youtube.ungraph": "social",
+kind = {"email-Enron": "communication", "ca-AstroPh": "collaboration", "soc-Epinions1": "trust", "sx-mathoverflow": "Q\\&A$^\\dagger$",
+        "sx-askubuntu": "Q\\&A$^\\dagger$", "com-dblp.ungraph": "collaboration", "com-youtube.ungraph": "social",
         "wiki-Talk": "communication", "soc-pokec-relationships": "social", "soc-LiveJournal1": "social"}
-L = ["\\begin{table}[t]", "\\centering", "\\caption{Datasets (SNAP~\\cite{leskovec2014snap}). $m$ counts undirected edges (for temporal graphs, distinct pairs over all time); $\\omega_k$ is the maximum $k$-plex size of the full graph.}",
-     "\\label{tab:data}", "\\small", "\\setlength{\\tabcolsep}{4pt}", "\\begin{tabular}{lrrlrrr}", "\\toprule",
+L = ["\\begin{table}[t]", "\\centering", "\\caption{Datasets (SNAP~\\cite{leskovec2014snap}). $m$ counts undirected edges (for temporal graphs, distinct pairs over all time); $\\omega_k$ is the maximum $k$-plex size of the full graph; $^\\dagger$: temporal.}",
+     "\\label{tab:data}", "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{lrrlrrr}", "\\toprule",
      "Graph & $n$ & $m$ & Type & $\\omega_1$ & $\\omega_2$ & $\\omega_3$\\\\", "\\midrule"]
 for g in ORDER:
     if g not in ds:
@@ -238,9 +243,9 @@ open(f"{P}/tables/main.tex", "w").write("\n".join(L) + "\n")
 
 # ---------------------------------------------------------------- Table: LazyMC (k = 1)
 L = ["\\begin{table}[t]", "\\centering",
-     "\\caption{CertKP vs.\\ LazyMC~\\cite{sun2022lazymc} ($k=1$, same search engine and core maintenance; median of three seeds, LiveJournal one). Avg update time ($\\mu$s); Hits: harmful deletions (CertKP); Glob: whole-graph searches of LazyMC vs.\\ cache searches of CertKP; LazyMC$^{\\mathrm{X}}$: LazyMC with MC-BRB for its whole-graph searches (adversarial stream; on LiveJournal both columns use MC-BRB). CertKP on WikiTalk and Pokec: one seed.}",
-     "\\label{tab:lazymc}", "\\footnotesize", "\\setlength{\\tabcolsep}{2.4pt}", "\\begin{tabular}{llrrrrrr}", "\\toprule",
-     "Graph & Stream & LazyMC & LazyMC$^{\\mathrm{X}}$ & CertKP & Ratio & Hits & Glob (L/C)\\\\", "\\midrule"]
+     "\\caption{CertKP vs.\\ LazyMC~\\cite{sun2022lazymc} ($k=1$, same search engine and core maintenance; median of three seeds, LiveJournal one). Avg update time ($\\mu$s); Hits: harmful deletions (CertKP); Glob: whole-graph searches of LazyMC / cache searches of CertKP; LazyMC$^{\\mathrm{X}}$: LazyMC with MC-BRB for its whole-graph searches (adversarial stream; on LiveJournal both columns use MC-BRB). CertKP on WikiTalk and Pokec: one seed.}",
+     "\\label{tab:lazymc}", "\\footnotesize", "\\setlength{\\tabcolsep}{2pt}", "\\begin{tabular}{llrrrrrr}", "\\toprule",
+     "Graph & Stream & LazyMC & LazyMC$^{\\mathrm{X}}$ & CertKP & Ratio & Hits & Glob\\\\", "\\midrule"]
 for s_ in ("temporal", "tinc", "rand", "delins", "hot"):
     lzg, full = grid.get((s_, "lazymc"), {}), grid.get((s_, "full"), {})
     for g in ORDER:
@@ -248,7 +253,7 @@ for s_ in ("temporal", "tinc", "rand", "delins", "hot"):
             continue
         a, b = lzg[(g, 1)], full[(g, 1)]
         x = grid.get((s_, "lazymcx"), {}).get((g, 1))
-        L.append(f"{NAME[g]} & {SN[s_]} & {fmt_us(a['dyn_avg_us'])} & {fmt_us(x['dyn_avg_us']) if x else '--'} & {fmt_us(b['dyn_avg_us'])} & {a['dyn_avg_us']/b['dyn_avg_us']:.2f}$\\times$ & {b['del_hit']} & {a['del_global']} / {b['del_global']}\\\\")
+        L.append(f"{NAME[g]} & {SN[s_]} & {fmt_us(a['dyn_avg_us'])} & {fmt_us(x['dyn_avg_us']) if x else '--'} & {fmt_us(b['dyn_avg_us'])} & {ratio(a['dyn_avg_us']/b['dyn_avg_us'])}$\\times$ & {b['del_hit']} & {a['del_global']}/{b['del_global']}\\\\")
 L += ["\\bottomrule", "\\end{tabular}", "\\end{table}"]
 open(f"{P}/tables/lazymc.tex", "w").write("\n".join(L) + "\n")
 
@@ -259,7 +264,7 @@ C = {"ST": "#7f7f7f", "BasicX": "#bdbdbd", "BasicX+": "#969696", "LazyMC": "#d95
 # Fig 1: adversarial stream, k = 1
 gs = [g for g in ("email-Enron", "soc-Epinions1", "com-youtube.ungraph") if (g, 1) in grid.get(("hot", "lazymc"), {}) and (g, 1) in hot_full]
 if gs:
-    fig, ax = plt.subplots(figsize=(3.4, 1.75))
+    fig, ax = plt.subplots(figsize=(3.4, 2.0))
     series = (("ST (MC-BRB)", [hot_full[(g, 1)]["st_avg_ms"] * 1000 for g in gs], C["ST"]),
               ("BasicX", [grid[("hot", "basicx")].get((g, 1), {}).get("dyn_avg_us", float("nan")) for g in gs], C["BasicX"]),
               ("BasicX+", [grid[("hot", "bxc")].get((g, 1), {}).get("dyn_avg_us", float("nan")) for g in gs], C["BasicX+"]),
@@ -272,12 +277,12 @@ if gs:
             if not math.isnan(v):
                 ax.text(bx_.get_x() + bx_.get_width() / 2, v * 1.15, f"{v/1000:.0f}" if v >= 1000 else f"{v/1000:.1f}", ha="center", va="bottom", fontsize=5.5)
     ax.set_yscale("log")
-    ax.set_ylim(50, 3e6)
+    ax.set_ylim(50, 1e6)
     ax.set_xticks(range(len(gs)))
     ax.set_xticklabels([NAME[g] for g in gs])
     ax.set_ylabel("avg update time ($\\mu$s)")
-    ax.legend(frameon=False, ncol=5, loc="upper left", fontsize=6, handlelength=1.2, columnspacing=0.8)
-    ax.text(0.99, 0.80, "bar labels in ms", transform=ax.transAxes, ha="right", va="top", fontsize=5.5, color="#555")
+    # legend above the axes, never over bars or labels
+    ax.legend(frameon=False, ncol=3, loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=6.5, handlelength=1.2, columnspacing=1.0)
     for sp_ in ("top", "right"):
         ax.spines[sp_].set_visible(False)
     fig.tight_layout(pad=0.2)
@@ -295,7 +300,7 @@ for v in ("basic", "repair", "cache", "full", "bxc"):
 cl = [(g, k) for g in ("email-Enron", "soc-Epinions1", "com-youtube.ungraph") for k in (1, 2, 3)
       if all((v, g, k) in abl for v in ("basic", "repair", "cache", "full"))]
 if cl:
-    fig, ax = plt.subplots(figsize=(7.0, 1.8))
+    fig, ax = plt.subplots(figsize=(7.0, 2.0))
     w = 0.16
     for i, (v, lab) in enumerate((("bxc", "BasicX+"), ("basic", "Basic"), ("repair", "+Repair"), ("cache", "+Cache"), ("full", "CertKP"))):
         ax.bar([j + (i - 2) * w for j in range(len(cl))], [abl[(v, g, k)]["speedup_vs_st"] if (v, g, k) in abl else float("nan") for g, k in cl], w, label=lab, color=C[lab],
@@ -305,7 +310,7 @@ if cl:
     ax.set_xticks(range(len(cl)))
     ax.set_xticklabels([f"{NAME[g]}\nk={k}" for g, k in cl], fontsize=7)
     ax.set_ylabel("speedup over ST")
-    ax.legend(frameon=False, ncol=5, loc="upper right", fontsize=7)
+    ax.legend(frameon=False, ncol=5, loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=7)
     for sp_ in ("top", "right"):
         ax.spines[sp_].set_visible(False)
     fig.tight_layout(pad=0.2)
