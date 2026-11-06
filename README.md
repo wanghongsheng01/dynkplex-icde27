@@ -13,7 +13,10 @@ script that regenerates the tables and figures.
   `STRESS_BUDGET=1e-9 STRESS_EVERY=1` forces the time-budget fallback on every search.
 - `code/run_v13.sh` — the experiment grid of the paper (three seeds; ablation; LazyMC-X; LiveJournal;
   single-job Pokec and LiveJournal runs; static cross-checks); `code/run_v13b.sh` reruns BasicX with
-  the same build. `code/make_paper.py` regenerates `paper/tables/*.tex`, `paper/figs/*.pdf` and
+  the same build; `code/run_v14.sh` reruns LazyMC on every stream, LazyMC and BasicX on LiveJournal and
+  the ablation with seeds 4 and 5 (its output is merged into `results/v13/`); `code/run_v15.sh` runs the
+  additional experiments: LazyMC+, the budget constant c, k = 4, short windows, the adversarial stream
+  on WikiTalk and Pokec, and peak memory (`results/v15/`, summarised by `code/v15_facts.py`). `code/make_paper.py` regenerates `paper/tables/*.tex`, `paper/figs/*.pdf` and
   `paper/numbers.tex` from `results/` (the LaTeX sources are not in this repository; create
   `paper/tables` and `paper/figs` first); `code/paper_facts.py` prints every quantity quoted in the text
   of the experiments section.
@@ -24,15 +27,19 @@ script that regenerates the tables and figures.
 - `results/v13/` — JSON lines, one per run (see the field list below), named `<stream>_<variant>.jsonl`
   (`full` = CertKP, `bxc` = BasicX+, `basicx` = BasicX, `basic`/`repair`/`cache` = ablation,
   `lazymc*`, `lj_*` = LiveJournal); `results/v13/p1/` holds the runs executed one at a time.
-  The LazyMC runs and the BasicX runs on LiveJournal (`lj_basicx`, no fallback) come from an earlier
-  build whose code paths for them are identical.
+  Every run in `results/v13/` comes from the same build (`kplex12`); `results/v14/` holds the raw
+  output of `run_v14.sh` before merging.
 - `results/external/` — static solver cross-checks (`crosscheck.md`, Pokec, LiveJournal, the kPlexS
   output at k = 1); `results/lazymc_order/corebench.jsonl` — core-maintenance benchmark;
   `results/stress/` — output of the randomised harness.
 
 ## Build and run
+The scripts call the binaries `kplex12` and `kplex13`. Both are built from `code/kplex.cpp`: `kplex13`
+is the current file, and `kplex12` is the same file without the LazyMC+ refresh (the
+`refreshOnCore` function and the `KPLEX_EXT_CORESUB` branch inside LazyMC), which no other variant uses.
 ```
 g++ -O3 -march=native -std=c++17 -o code/kplex code/kplex.cpp     # or clang++
+cp code/kplex code/kplex12 && cp code/kplex code/kplex13            # identical for every variant but LazyMC+
 bash scripts/fetch_solvers.sh external
 bash scripts/fetch_data.sh
 cd code && ./kplex brute 2000 1                                   # exhaustive check, small graphs
@@ -44,7 +51,8 @@ Modes: `dyn <graph> <k> <rand|delins|temporal|tinc|hot> <Q> <seed> <checkpoint_e
 `ext <graph> <k>` (one static solve), `brute <trials> <seed>`, `corebench`, `corebrute`.
 Variants are selected by environment variables: `KPLEX_REPAIR`, `KPLEX_CACHE`, `KPLEX_CORE`,
 `KPLEX_WARM` (CertKP = all four), `KPLEX_EXT_GLOBAL` (BasicX), `KPLEX_REPAIR KPLEX_CORE KPLEX_EXT_GLOBAL
-KPLEX_EXT_CORESUB` (BasicX+), `KPLEX_ALGO=lazymc` (add `KPLEX_EXT_GLOBAL` for LazyMC-X); the static engine
+KPLEX_EXT_CORESUB` (BasicX+), `KPLEX_ALGO=lazymc` (add `KPLEX_EXT_GLOBAL` for LazyMC-X, and also
+`KPLEX_EXT_CORESUB KPLEX_CORE` for LazyMC+, whose refresh calls the solver on the (omega-1)-core only); the static engine
 by `KPLEX_EXT=mcbrb|pmc|kplexs|kplext|kpex`; the time budget by `KPLEX_BUDGET` (default 1, in units of the wall time of the last external solver
 call; a search that exceeds it is answered by one external call on the (t-k)-core). A run stops
 after `KPLEX_RUN_CAP_S` seconds (default 1200) and then reports `truncated: 1` with the number of
@@ -65,5 +73,8 @@ com-Orkut and com-Friendster on a Linux server (>= 64 GB / >= 128 GB RAM); resul
 ## Reproducing the paper
 ```
 cd code && ./run_v13.sh 3 && ./run_v13b.sh 3     # about 6 h on a 10-core machine, three jobs at a time
-python3 make_paper.py && python3 paper_facts.py
+./run_v14.sh 3                                    # about 4 h; then append results/v14/hot_{basic,repair,cache}
+                                                  # to results/v13 and replace v13/lazymc_* and v13/lj_{lazymc,basicx}
+./run_v15.sh 3                                    # about 5 h
+python3 make_paper.py && python3 paper_facts.py && python3 v15_facts.py
 ```

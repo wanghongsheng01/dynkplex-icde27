@@ -69,6 +69,8 @@ for base in ("basicx", "bxc"):
 core_share = [r["core_s"] / r["dyn_total_s"] for s, c, r in T if r["del_hit"] == 0 and r["dyn_total_s"] > 0 and r["core_s"] > 0]
 print("core-maintenance share of CertKP time in no-hit cells", rng(core_share, "%.2f"))
 print("hits per typical run", min(r["del_hit"] for _, _, r in T), max(r["del_hit"] for _, _, r in T))
+nos = [1 - (r.get("ins_seeded", 0) + r["del_hit"]) / r["updates"] for _, _, r in T]
+print("share of typical updates answered by the filters without any search", rng(nos, "%.3f"))
 for gg in ("soc-pokec-relationships", "soc-LiveJournal1", "wiki-Talk"):
     print(gg, "p50 us", sorted({round(r["dyn_p50_us"], 2) for s, c, r in T if c[0] == gg}),
           "core us/update", sorted({round(r["core_s"] / max(1, r["updates"]) * 1e6, 1) for s, c, r in T if c[0] == gg}))
@@ -105,6 +107,11 @@ for (gg, k), r in sorted(H.items()):
     print(f"  {gg} k={k}: avg {r['dyn_avg_us']:.0f}us ST {r['st_avg_ms']:.1f}ms xST {r['speedup_vs_st']:.1f} hits {r['del_hit']} glob {r['del_global']} "
           f"fb {r['fallbacks']} swap {r['del_swap']} builds {r['cache_builds']} sub {r['cache_sub']} subinv {r['cache_sub_inv']} "
           f"max {r['dyn_max_ms']:.0f}ms trunc {r.get('truncated')} upd {r['updates']} | BX+ {b.get('dyn_avg_us', float('nan')):.0f}us core_n/glob {b.get('coresub_n', 0) / max(1, b.get('del_global', 1)):.0f}")
+for k in (1, 2, 3):
+    F = {(g(r), r["seed"]): r for r in load(f"{V}/hot_full.jsonl") if r["k"] == k and not r.get("truncated")}
+    B = {(g(r), r["seed"]): r for r in load(f"{V}/hot_bxc.jsonl") if r["k"] == k and not r.get("truncated")}
+    xs = [B[x]["dyn_avg_us"] / F[x]["dyn_avg_us"] for x in F if x in B and x[0] != "com-dblp.ungraph"]
+    print(f"k={k} per-seed CertKP vs bxc on Enron/Epinions/YouTube (seed-paired, all 3 seeds): {rng(xs)}")
 print("updates/s CertKP adversarial:", {f"{gg[:8]}{k}": round(1e6 / r["dyn_avg_us"]) for (gg, k), r in H.items()})
 
 print("\n== LazyMC (k=1)")
@@ -119,12 +126,18 @@ for v in ("full", "bxc", "basicx", "lazymc"):
     for r in cells.get(("rand", v, "soc-LiveJournal1", 1), []) + cells.get(("delins", v, "soc-LiveJournal1", 1), []):
         print(f"  LJ {v} {r['stream']}: avg {r['dyn_avg_us']:.1f} p50 {r['dyn_p50_us']} max {r['dyn_max_ms']:.1f} init {r['init_s']:.2f} hits {r['del_hit']} glob {r['del_global']} fb {r['fallbacks']} builds {r['cache_builds']} shrink {r['del_shrink']} st {r['st_avg_ms']:.0f} stw {r['st_wall_ms']:.0f} capped {r['m_capped']}")
 
-print("\n== ablation (adversarial, seed 3)")
+print("\n== ablation (adversarial, median run of three seeds)")
 ab = {}
 for v in ("basic", "repair", "cache", "full", "bxc", "basicx"):
+    by = collections.defaultdict(list)
     for r in load(f"{V}/hot_{v}.jsonl"):
-        if r["seed"] == 3:
-            ab[(v, g(r), r["k"])] = r
+        by[(g(r), r["k"])].append(r)
+    for key, rows in by.items():
+        ab[(v,) + key] = med_run(rows)
+print("  seeds per ablation cell:", sorted(set(len(rows) for rows in by.values())))
+for v in ("basic", "repair", "cache"):
+    tr = [(g(r)[:8], r["k"], r["seed"]) for r in load(f"{V}/hot_{v}.jsonl") if r.get("truncated")]
+    print(f"  truncated {v}: {tr}")
 G3 = ("email-Enron", "soc-Epinions1", "com-youtube.ungraph")
 for k in (1, 2, 3):
     for gg in G3:

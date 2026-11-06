@@ -11,6 +11,7 @@ import statistics
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 
 R = "../results"
 P = "../paper"
@@ -215,7 +216,7 @@ open(f"{P}/tables/static.tex", "w").write("\n".join(L) + "\n")
 # ---------------------------------------------------------------- Table: main results
 SN = {"rand": "rand", "delins": "del-ins", "temporal": "window", "tinc": "t-insert", "hot": "advers."}
 L = ["\\begin{table*}[t]", "\\centering",
-     "\\caption{Main results (median of three seeds; WikiTalk and Pokec one seed). Avg: average update time of CertKP ($\\mu$s); Max: slowest update (ms); ST: time of the best static solver at the checkpoints, as reported by the solver (ms); $\\times$ST: ST/Avg; $\\times$BX$^+$: average update time of BasicX$^+$ (filters, exact core numbers, repair, and the official solver on the $(\\omega-k)$-core for every remaining harmful deletion) divided by Avg. $^\\dagger$: run stopped by the 20-minute cap; Avg, ST and the ratios cover the updates processed. All runs matched the static optimum at every checkpoint.}",
+     "\\caption{Main results (median of three seeds; WikiTalk and Pokec one seed). Avg: average update time of CertKP ($\\mu$s; k: thousands); Max: slowest update (ms); ST: time of the best static solver at the checkpoints, as reported by the solver (ms); $\\times$ST: ST/Avg; $\\times$BX$^+$: average update time of BasicX$^+$ (filters, exact core numbers, repair, and the official solver on the $(\\omega-k)$-core for every remaining harmful deletion) divided by Avg. $^\\dagger$: run stopped by the 20-minute cap; Avg, ST and the ratios cover the updates processed. All runs matched the static optimum at every checkpoint.}",
      "\\label{tab:main}", "\\footnotesize", "\\setlength{\\tabcolsep}{2.4pt}",
      "\\begin{tabular}{ll" + "rrrrr" * 3 + "}", "\\toprule",
      " & & \\multicolumn{5}{c}{$k=1$} & \\multicolumn{5}{c}{$k=2$} & \\multicolumn{5}{c}{$k=3$}\\\\",
@@ -243,7 +244,7 @@ open(f"{P}/tables/main.tex", "w").write("\n".join(L) + "\n")
 
 # ---------------------------------------------------------------- Table: LazyMC (k = 1)
 L = ["\\begin{table}[t]", "\\centering",
-     "\\caption{CertKP vs.\\ LazyMC~\\cite{sun2022lazymc} ($k=1$, same search engine and core maintenance; median of three seeds, LiveJournal one). Avg update time ($\\mu$s); Hits: harmful deletions (CertKP); Glob: whole-graph searches of LazyMC / cache searches of CertKP; LazyMC$^{\\mathrm{X}}$: LazyMC with MC-BRB for its whole-graph searches (adversarial stream; on LiveJournal both columns use MC-BRB). CertKP on WikiTalk and Pokec: one seed.}",
+     "\\caption{CertKP vs.\\ LazyMC~\\cite{sun2022lazymc} ($k=1$, same search engine and core maintenance; median of three seeds, LiveJournal one). Avg update time ($\\mu$s); Ratio: LazyMC / CertKP; Hits: harmful deletions (CertKP); Glob: whole-graph searches of LazyMC / cache searches of CertKP; LazyMC$^{\\mathrm{X}}$: LazyMC with MC-BRB for its whole-graph searches (adversarial stream; on LiveJournal the LazyMC column already uses MC-BRB). CertKP on WikiTalk and Pokec: one seed.}",
      "\\label{tab:lazymc}", "\\footnotesize", "\\setlength{\\tabcolsep}{2pt}", "\\begin{tabular}{llrrrrrr}", "\\toprule",
      "Graph & Stream & LazyMC & LazyMC$^{\\mathrm{X}}$ & CertKP & Ratio & Hits & Glob\\\\", "\\midrule"]
 for s_ in ("temporal", "tinc", "rand", "delins", "hot"):
@@ -259,7 +260,7 @@ open(f"{P}/tables/lazymc.tex", "w").write("\n".join(L) + "\n")
 
 # ---------------------------------------------------------------- figures
 plt.rcParams.update({"font.size": 8, "font.family": "serif", "axes.linewidth": 0.6, "pdf.fonttype": 42})
-C = {"ST": "#7f7f7f", "BasicX": "#bdbdbd", "BasicX+": "#969696", "LazyMC": "#d95f02", "Basic": "#d9d9d9", "+Repair": "#9ecae1", "+Cache": "#4292c6", "CertKP": "#08519c"}
+C = {"ST": "#7f7f7f", "BasicX": "#bdbdbd", "BasicX+": "#969696", "LazyMC": "#d95f02", "Basic": "#d9d9d9", "+Repair": "#fdae6b", "+Cache": "#6baed6", "CertKP": "#08519c"}
 
 # Fig 1: adversarial stream, k = 1
 gs = [g for g in ("email-Enron", "soc-Epinions1", "com-youtube.ungraph") if (g, 1) in grid.get(("hot", "lazymc"), {}) and (g, 1) in hot_full]
@@ -275,12 +276,13 @@ if gs:
         bars = ax.bar([j + (i - 2) * w for j in range(len(gs))], vals, w, label=lab, color=col)
         for bx_, v in zip(bars, vals):
             if not math.isnan(v):
-                ax.text(bx_.get_x() + bx_.get_width() / 2, v * 1.15, f"{v/1000:.0f}" if v >= 1000 else f"{v/1000:.1f}", ha="center", va="bottom", fontsize=5.5)
+                ax.text(bx_.get_x() + bx_.get_width() / 2, v * 1.15, f"{v/1000:.0f}" if v >= 1000 else f"{v/1000:.1f}", ha="center", va="bottom", fontsize=5.5)  # labels in ms, as the axis
     ax.set_yscale("log")
     ax.set_ylim(50, 1e6)
+    ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda y, _: f"{y/1000:g}"))
     ax.set_xticks(range(len(gs)))
     ax.set_xticklabels([NAME[g] for g in gs])
-    ax.set_ylabel("avg update time ($\\mu$s)")
+    ax.set_ylabel("avg update time (ms)")
     # legend above the axes, never over bars or labels
     ax.legend(frameon=False, ncol=3, loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=6.5, handlelength=1.2, columnspacing=1.0)
     for sp_ in ("top", "right"):
@@ -289,14 +291,57 @@ if gs:
     fig.savefig(f"{P}/figs/fig1_motivation.pdf")
     plt.close(fig)
 
-# Fig: ablation on the adversarial stream (seed 3)
+# Fig: speedup over BasicX+ against the number of harmful deletions (median runs, all streams)
+pts = []
+for (s_, v), d in grid.items():
+    if v != "full":
+        continue
+    for (g, k), r in d.items():
+        b = grid.get((s_, "bxc"), {}).get((g, k))
+        if b and not r.get("truncated") and not b.get("truncated") and r["dyn_avg_us"] > 0:
+            pts.append((r["del_hit"], b["dyn_avg_us"] / r["dyn_avg_us"], k, s_ == "hot"))
+# real window streams over 5% and 20% of the history (review-requested, results/v15, one run each)
+win = []
+for w in ("0.05", "0.2"):
+    F = {(gname(r["graph"]), r["k"]): r for r in load(f"{R}/v15/win{w}_full.jsonl")}
+    B = {(gname(r["graph"]), r["k"]): r for r in load(f"{R}/v15/win{w}_bxc.jsonl")}
+    win += [(F[c]["del_hit"], B[c]["dyn_avg_us"] / F[c]["dyn_avg_us"], c[1]) for c in F if c in B]
+if pts:
+    fig, ax = plt.subplots(figsize=(3.4, 2.1))
+    kcol = {1: "#08519c", 2: "#1b9e77", 3: "#d95f02"}  # distinct hues per k
+    dodge = {1: 0.88, 2: 1.0, 3: 1.13}
+    for k in (1, 2, 3):
+        for hot, mk in ((False, "o"), (True, "^")):
+            sel = sorted((h, y) for h, y, kk, hh in pts if kk == k and hh == hot and h > 0)
+            xs = [h * dodge[k] * (1.05 if i and h == sel[i - 1][0] else 1) for i, (h, _) in enumerate(sel)]  # separate equal hit counts
+            ys = [y for _, y in sel]
+            if xs:
+                ax.scatter(xs, ys, s=12 if hot else 7, marker=mk, color=kcol[k], alpha=0.85, linewidths=0,
+                           label=f"k={k}, {'adversarial' if hot else 'typical'}")
+    for k in (1, 2, 3):
+        ax.scatter([h * dodge[k] for h, _, kk in win if kk == k], [y for _, y, kk in win if kk == k], s=10, marker="s",
+                   facecolors="none", edgecolors=kcol[k], linewidths=0.6, label="short window" if k == 1 else None)
+    z = [y for h, y, _, _ in pts if h == 0]  # runs without a hit: one range bar at the left edge
+    if z:
+        ax.plot([0.7, 0.7], [min(z), max(z)], color="#555", lw=2.2, solid_capstyle="butt")
+    ax.set_xscale("log"); ax.set_yscale("log")
+    ax.set_xlim(0.6, None)
+    ax.axhline(1, color="k", lw=0.5, ls="--")
+    ax.set_xlabel("harmful deletions per run (log scale)")
+    ax.set_ylabel("speedup over BasicX$^+$")
+    ax.legend(frameon=False, ncol=3, loc="lower center", bbox_to_anchor=(0.5, 1.0), fontsize=5.5, handletextpad=0.2, columnspacing=0.8)
+    for sp_ in ("top", "right"):
+        ax.spines[sp_].set_visible(False)
+    fig.tight_layout(pad=0.2)
+    fig.savefig(f"{P}/figs/fig_hits.pdf")
+    plt.close(fig)
+
+# Fig: ablation on the adversarial stream (median run of the three seeds)
 abl = {}
 for v in ("basic", "repair", "cache", "full", "bxc"):
     for (s_, vv, g, k), rows in cells.items():
         if s_ == "hot" and vv == v:
-            rr = [r for r in rows if r["seed"] == 3]
-            if rr:
-                abl[(v, g, k)] = rr[0]
+            abl[(v, g, k)] = median_run(rows)
 cl = [(g, k) for g in ("email-Enron", "soc-Epinions1", "com-youtube.ungraph") for k in (1, 2, 3)
       if all((v, g, k) in abl for v in ("basic", "repair", "cache", "full"))]
 if cl:

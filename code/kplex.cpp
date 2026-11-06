@@ -1126,6 +1126,19 @@ struct LazyMC {
     int Esize = min(q0 + 2, q1), Ecolor = min(p0 + 2, p1);
     return min(Esize, Ecolor) > theta;
   }
+  // LazyMC+ (review request): the global refresh hands the official solver only the vertices with core
+  // number >= t-1, which contain every clique of size >= t (cf. LazyMC's Theorem 4 restricted to the core)
+  vector<int> refreshOnCore(int t, StaticStats &st) {
+    vector<int> P, loc(G.n, -1);
+    for (int x = 0; x < G.n; x++) if (cm.K[x] >= t - 1) { loc[x] = (int)P.size(); P.push_back(x); }
+    if ((int)P.size() < t) return {};
+    DynGraph R((int)P.size());
+    for (int i = 0; i < R.n; i++) for (int y : G.adj[P[i]]) if (loc[y] >= 0) { R.adj[i].push_back(loc[y]); if (loc[y] > i) R.m++; }
+    vector<int> b = solveExact(R, 1, true, st);
+    for (int &x : b) x = P[x];
+    ds.coreSubN += R.n;
+    return b;
+  }
   // threshold-based refresh on the subgraph induced by X: a clique larger than t, or empty
   vector<int> refreshOn(const vector<int> &X, int t) {
     vector<int> ids;
@@ -1271,7 +1284,8 @@ struct LazyMC {
       else {
         ds.delGlobal++;
         StaticStats st;
-        if (extGlobal()) c = solveExact(G, 1, true, st);
+        if (extGlobal() && getenv("KPLEX_EXT_CORESUB")) c = refreshOnCore((int)H.size() + 1, st);  // LazyMC+: only the core that can hold a larger clique
+        else if (extGlobal()) c = solveExact(G, 1, true, st);
         else { c = staticSolve(G, 1, (int)H.size(), false, st); ds.nodes += st.nodes; }
       }
       ds.tGlobal += secs(tg);
