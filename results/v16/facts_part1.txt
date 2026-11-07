@@ -1,0 +1,151 @@
+
+== exact
+  trace groups 36, comparisons with CertKP 48, disagreements 0, updates per method 489219, invalid 0
+  [every-update ST] runs 8 mismatch/invalid [] truncated []
+  updates checked against the static solver: 84684
+
+== region
+  [region] runs 49 mismatch/invalid [] truncated []
+  com-youtub delins   k=2: X mean/p99 base 7.7/204 avg 38.8 | twohop X 275.6/9319 avg 120.0 | core X 4155.7/20585 avg 1428.0 | nonadj X 5.5/122 avg 42.9
+  com-youtub delins   k=3: X mean/p99 base 8.5/226 avg 137.8 | twohop X 293.3/9426 avg 307.3 | core X 4155.7/20585 avg 1666.7
+  email-Enro delins   k=2: X mean/p99 base 14.6/199 avg 33.6 | twohop X 244.6/1909 avg 61.9 | core X 804.9/2436 avg 84.7 | nonadj X 11.8/146 avg 32.5
+  email-Enro delins   k=3: X mean/p99 base 14.7/203 avg 70.0 | twohop X 237.6/1838 avg 139.8 | core X 745.3/2176 avg 153.5
+  soc-Epinio delins   k=2: X mean/p99 base 33.2/517 avg 109.2 | twohop X 542.7/4187 avg 230.8 | core X 2059.1/4527 avg 376.0 | nonadj X 20.7/295 avg 99.9
+  soc-Epinio delins   k=3: X mean/p99 base 26.6/441 avg 171.5 | twohop X 440.1/3748 avg 375.1 | core X 1717.2/3895 avg 520.4
+  sx-askubun temporal k=2: X mean/p99 base 2.6/2 avg 3.6 | twohop X 12.9/2 avg 5.4 | core X 58.9/1288 avg 14.4 | nonadj X 2.5/2 avg 3.7
+  sx-askubun tinc     k=2: X mean/p99 base 2.7/28 avg 2.5 | twohop X 8.7/445 avg 3.6 | core X 29.9/495 avg 11.1 | nonadj X 2.6/27 avg 2.5
+  sx-askubun temporal k=3: X mean/p99 base 2.8/2 avg 4.4 | twohop X 14.6/2 avg 6.6 | core X 58.9/1288 avg 14.4
+  sx-askubun tinc     k=3: X mean/p99 base 2.5/21 avg 2.1 | twohop X 6.5/340 avg 3.2 | core X 19.8/406 avg 8.5
+  sx-mathove temporal k=2: X mean/p99 base 13.8/298 avg 97.1 | twohop X 87.7/1297 avg 114.0 | core X 234.1/1299 avg 122.4 | nonadj X 10.2/194 avg 94.1
+  sx-mathove tinc     k=2: X mean/p99 base 10.8/154 avg 16.3 | twohop X 47.7/481 avg 22.4 | core X 126.9/490 avg 27.3 | nonadj X 8.7/117 avg 14.9
+  sx-mathove temporal k=3: X mean/p99 base 11.7/268 avg 191.6 | twohop X 70.5/1174 avg 213.0 | core X 180.9/1176 avg 219.1
+  sx-mathove tinc     k=3: X mean/p99 base 9.9/144 avg 38.9 | twohop X 40.7/424 avg 52.7 | core X 105.0/432 avg 57.0
+  twohop_x: ratio to two-seed 2.60-35.79 median 6.19
+  twohop_t: ratio to two-seed 1.11-3.10 median 1.51
+  core_x: ratio to two-seed 7.92-539.70 median 21.84
+  core_t: ratio to two-seed 1.14-36.84 median 3.16
+  nonadj_x: ratio to two-seed 0.62-0.96 median 0.81
+  nonadj_t: ratio to two-seed 0.91-1.11 median 0.97
+
+== hotrev
+  [hotrev insfrac 0.333] runs 12 mismatch/invalid [] truncated []
+  f=0.333 com-yout k=1: ratio BX+/CertKP 7.57 hits 341 grow 21 shrink 27 builds 23 sub 853693 revoked 7037 fb 0 hits/level 12.6
+  f=0.333 com-yout k=2: ratio BX+/CertKP 2.06 hits 340 grow 30 shrink 36 builds 29 sub 149536 revoked 26227 fb 30 hits/level 9.4
+  f=0.333 email-En k=1: ratio BX+/CertKP 12.87 hits 695 grow 44 shrink 52 builds 47 sub 165114 revoked 11152 fb 0 hits/level 13.4
+  f=0.333 email-En k=2: ratio BX+/CertKP 4.36 hits 694 grow 47 shrink 54 builds 45 sub 90268 revoked 30653 fb 6 hits/level 12.9
+  f=0.333 soc-Epin k=1: ratio BX+/CertKP 7.96 hits 698 grow 58 shrink 68 builds 53 sub 371984 revoked 15567 fb 0 hits/level 10.3
+  f=0.333 soc-Epin k=2: ratio BX+/CertKP 1.89 hits 693 grow 54 shrink 65 builds 52 sub 124430 revoked 54992 fb 100 hits/level 10.7
+  [hotrev insfrac 0.667] runs 12 mismatch/invalid [] truncated []
+  f=0.667 com-yout k=1: ratio BX+/CertKP 2.65 hits 156 grow 86 shrink 86 builds 22 sub 588315 revoked 17469 fb 0 hits/level 1.8
+  f=0.667 com-yout k=2: ratio BX+/CertKP 0.60 hits 171 grow 64 shrink 65 builds 17 sub 106516 revoked 39848 fb 36 hits/level 2.6
+  f=0.667 email-En k=1: ratio BX+/CertKP 4.38 hits 345 grow 216 shrink 217 builds 61 sub 176754 revoked 21121 fb 0 hits/level 1.6
+  f=0.667 email-En k=2: ratio BX+/CertKP 2.39 hits 336 grow 44 shrink 44 builds 11 sub 23011 revoked 15465 fb 0 hits/level 7.6
+  f=0.667 soc-Epin k=1: ratio BX+/CertKP 9.30 hits 306 grow 47 shrink 47 builds 18 sub 105965 revoked 16764 fb 0 hits/level 6.5
+  f=0.667 soc-Epin k=2: ratio BX+/CertKP 1.24 hits 360 grow 114 shrink 114 builds 35 sub 108488 revoked 72082 fb 36 hits/level 3.2
+  [hotrev insfrac 0.889] runs 12 mismatch/invalid [] truncated []
+  f=0.889 com-yout k=1: ratio BX+/CertKP 5.67 hits 60 grow 47 shrink 47 builds 4 sub 115225 revoked 9612 fb 0 hits/level 1.3
+  f=0.889 com-yout k=2: ratio BX+/CertKP 1.42 hits 55 grow 19 shrink 19 builds 1 sub 21508 revoked 17258 fb 7 hits/level 2.9
+  f=0.889 email-En k=1: ratio BX+/CertKP 10.95 hits 114 grow 86 shrink 86 builds 5 sub 23199 revoked 10730 fb 0 hits/level 1.3
+  f=0.889 email-En k=2: ratio BX+/CertKP 2.14 hits 136 grow 16 shrink 16 builds 2 sub 8604 revoked 7179 fb 0 hits/level 8.5
+  f=0.889 soc-Epin k=1: ratio BX+/CertKP 12.50 hits 102 grow 12 shrink 12 builds 3 sub 24352 revoked 9550 fb 0 hits/level 8.5
+  f=0.889 soc-Epin k=2: ratio BX+/CertKP 1.10 hits 120 grow 35 shrink 35 builds 5 sub 40604 revoked 35016 fb 14 hits/level 3.4
+
+== takedown
+  [takedown] runs 28 mismatch/invalid [] truncated []
+  com-dblp k=1: CertKP 5.5 hits 15 omega 114->102 vsST 1074 | BX+ ratio 2.55 | LazyMC ratio 11.26
+  com-dblp k=2: CertKP 5.3 hits 44 omega 114->102 vsST 2363 | BX+ ratio 6.21
+  com-dblp k=3: CertKP 31.9 hits 83 omega 114->102 vsST 491 | BX+ ratio 1.21
+  com-yout k=1: CertKP 64.8 hits 4 omega 17->14 vsST 2138 | BX+ ratio 0.91 | LazyMC ratio 1.65
+  com-yout k=2: CertKP 272.6 hits 11 omega 20->17 vsST 769 | BX+ ratio 0.39
+  com-yout k=3: CertKP 208.6 hits 13 omega 21->21 vsST 765 | BX+ ratio 0.56
+  email-En k=1: CertKP 8.9 hits 11 omega 20->16 vsST 1488 | BX+ ratio 2.17 | LazyMC ratio 1.18
+  email-En k=2: CertKP 22.0 hits 12 omega 22->19 vsST 1537 | BX+ ratio 1.42
+  email-En k=3: CertKP 25.8 hits 18 omega 24->22 vsST 1024 | BX+ ratio 1.10
+  soc-Epin k=1: CertKP 11.7 hits 6 omega 23->21 vsST 3784 | BX+ ratio 3.02 | LazyMC ratio 1.52
+  soc-Epin k=2: CertKP 144.7 hits 12 omega 28->25 vsST 616 | BX+ ratio 0.80
+  soc-Epin k=3: CertKP 154.1 hits 20 omega 32->27 vsST 378 | BX+ ratio 0.81
+
+== budget2
+  [budget2] runs 22 mismatch/invalid [] truncated []
+  com-youtub hot      k=2 c0.1  : avg 27470.1 max 1675 ms fb 40 trunc 0 upd 1000
+  com-youtub hot      k=2 cinf  : avg 15616.6 max 1572 ms fb 0 trunc 0 upd 1000
+  com-youtub hot      k=3 c0.1  : avg 63049.7 max 1013 ms fb 109 trunc 0 upd 1000
+  com-youtub hot      k=3 cinf  : avg 32772.9 max 2480 ms fb 0 trunc 0 upd 1000
+  email-Enro hot      k=2 c0.1  : avg 11514.2 max 426 ms fb 111 trunc 0 upd 2000
+  email-Enro hot      k=2 cinf  : avg 1755.2 max 114 ms fb 0 trunc 0 upd 2000
+  email-Enro hot      k=3 c0.1  : avg 16968.0 max 352 ms fb 224 trunc 0 upd 2000
+  email-Enro hot      k=3 cinf  : avg 7830.3 max 1022 ms fb 0 trunc 0 upd 2000
+  soc-Epinio hot      k=2 c0.1  : avg 131017.0 max 3006 ms fb 222 trunc 0 upd 2000
+  soc-Epinio hot      k=2 cinf  : avg 32120.6 max 2325 ms fb 0 trunc 0 upd 2000
+  soc-Epinio hot      k=3 c0.1  : avg 214274.7 max 2964 ms fb 304 trunc 0 upd 2000
+  soc-Epinio hot      k=3 cinf  : avg 206861.7 max 23415 ms fb 0 trunc 0 upd 2000
+  sx-mathove temporal k=2 c0.25 : avg 89.0 max 395 ms fb 1 trunc 0 upd 8793
+  sx-mathove temporal k=2 c0.5  : avg 89.7 max 412 ms fb 1 trunc 0 upd 8793
+  sx-mathove temporal k=2 c1    : avg 104.6 max 541 ms fb 1 trunc 0 upd 8793
+  sx-mathove temporal k=2 c2    : avg 97.3 max 444 ms fb 0 trunc 0 upd 8793
+  sx-mathove temporal k=2 c4    : avg 91.2 max 429 ms fb 0 trunc 0 upd 8793
+  sx-mathove temporal k=3 c0.25 : avg 205.6 max 267 ms fb 7 trunc 0 upd 8793
+  sx-mathove temporal k=3 c0.5  : avg 181.4 max 274 ms fb 5 trunc 0 upd 8793
+  sx-mathove temporal k=3 c1    : avg 205.7 max 345 ms fb 4 trunc 0 upd 8793
+  sx-mathove temporal k=3 c2    : avg 257.3 max 476 ms fb 3 trunc 0 upd 8793
+  sx-mathove temporal k=3 c4    : avg 316.8 max 790 ms fb 2 trunc 0 upd 8793
+
+== densest
+  email-Enro k=1: x ST with 100 checkpoints 130.3 vs 10 checkpoints 151.3 mismatch 0
+  email-Enro k=2: x ST with 100 checkpoints 68.9 vs 10 checkpoints 87.4 mismatch 0
+  soc-Epinio k=1: x ST with 100 checkpoints 135.2 vs 10 checkpoints 156.4 mismatch 0
+  email-Enro k=3: x ST with 100 checkpoints 9.8 vs 10 checkpoints 12.1 mismatch 0
+  com-youtub k=1: x ST with 50 checkpoints 74.4 vs 5 checkpoints 79.6 mismatch 0
+  com-youtub k=2: x ST with 50 checkpoints 42.0 vs 5 checkpoints 46.7 mismatch 0
+  com-youtub k=3: x ST with 50 checkpoints 14.5 vs 5 checkpoints 13.2 mismatch 0
+  com-dblp.u k=1: x ST with 100 checkpoints 2.7 vs 10 checkpoints 3.1 mismatch 0
+  soc-Epinio k=2: x ST with 100 checkpoints 24.2 vs 10 checkpoints 26.8 mismatch 0
+  soc-Epinio k=3: x ST with 100 checkpoints 6.0 vs 10 checkpoints 6.3 mismatch 0
+
+== approx
+  email-Enro hot    k=1: avg 6.5 suboptimal 99/100 checkpoints, gap max 9 mean 5.8
+  email-Enro hot    k=2: avg 49.5 suboptimal 100/100 checkpoints, gap max 13 mean 6.4
+  email-Enro hot    k=3: avg 83.2 suboptimal 100/100 checkpoints, gap max 10 mean 6.5
+  soc-Epinio hot    k=1: avg 9.5 suboptimal 100/100 checkpoints, gap max 14 mean 10.2
+  soc-Epinio hot    k=2: avg 153.4 suboptimal 100/100 checkpoints, gap max 18 mean 9.7
+  soc-Epinio hot    k=3: avg 1321.5 suboptimal 96/100 checkpoints, gap max 17 mean 8.6
+  com-youtub hot    k=1: avg 32.4 suboptimal 50/50 checkpoints, gap max 12 mean 6.8
+  com-youtub hot    k=2: avg 331.3 suboptimal 49/50 checkpoints, gap max 14 mean 10.6
+  email-Enro rand   k=1: avg 0.8 suboptimal 16/20 checkpoints, gap max 2 mean 1.1
+  email-Enro rand   k=2: avg 0.9 suboptimal 6/20 checkpoints, gap max 2 mean 1.2
+  email-Enro rand   k=3: avg 0.9 suboptimal 16/20 checkpoints, gap max 4 mean 2.5
+  soc-Epinio rand   k=1: avg 1.5 suboptimal 19/20 checkpoints, gap max 1 mean 1.0
+  soc-Epinio rand   k=2: avg 1.2 suboptimal 12/20 checkpoints, gap max 3 mean 2.6
+  com-youtub hot    k=3: avg 223.1 suboptimal 50/50 checkpoints, gap max 13 mean 8.3
+  soc-Epinio rand   k=3: avg 1.2 suboptimal 7/20 checkpoints, gap max 1 mean 1.0
+  com-dblp.u rand   k=1: avg 1.6 suboptimal 0/20 checkpoints, gap max 0 mean 0.0
+  com-dblp.u rand   k=2: avg 1.5 suboptimal 0/20 checkpoints, gap max 0 mean 0.0
+  com-dblp.u rand   k=3: avg 1.5 suboptimal 0/20 checkpoints, gap max 0 mean 0.0
+  com-youtub rand   k=1: avg 2.1 suboptimal 0/20 checkpoints, gap max 0 mean 0.0
+  com-youtub rand   k=2: avg 1.6 suboptimal 0/20 checkpoints, gap max 0 mean 0.0
+  com-youtub rand   k=3: avg 1.7 suboptimal 6/20 checkpoints, gap max 1 mean 1.0
+
+== thresh
+  [d=1] alert errors 0 over 356 checkpoints
+  d=1 com-yout k=1: CertKP 296.8 BX+ 300.5 ratio 1.01 hits 18
+  d=1 com-yout k=2: CertKP 2279.1 BX+ 1166.1 ratio 0.51 hits 31
+  d=1 email-En k=1: CertKP 12.8 BX+ 91.7 ratio 7.18 hits 23
+  d=1 email-En k=2: CertKP 68.1 BX+ 243.4 ratio 3.57 hits 36
+  d=1 soc-Epin k=1: CertKP 36.7 BX+ 208.4 ratio 5.68 hits 27
+  d=1 soc-Epin k=2: CertKP 282.1 BX+ 216.5 ratio 0.77 hits 36
+  [d=3] alert errors 0 over 356 checkpoints
+  d=3 com-yout k=1: CertKP 325.0 BX+ 2429.4 ratio 7.48 hits 37
+  d=3 com-yout k=2: CertKP 3205.7 BX+ 5450.3 ratio 1.70 hits 51
+  d=3 email-En k=1: CertKP 14.3 BX+ 188.9 ratio 13.17 hits 41
+  d=3 email-En k=2: CertKP 235.4 BX+ 1263.0 ratio 5.37 hits 120
+  d=3 soc-Epin k=1: CertKP 40.5 BX+ 312.6 ratio 7.72 hits 42
+  d=3 soc-Epin k=2: CertKP 484.7 BX+ 1278.7 ratio 2.64 hits 54
+
+== k5
+  [k5] runs 24 mismatch/invalid [] truncated [('soc-Epinio', 5, 'full')]
+  hot com-yout: CertKP 60811.5 BX+ 62976.2 ratio 1.04 paired 0.88-1.04 vsST 7.5 p50 10.71
+  hot email-En: CertKP 11126.0 BX+ 15020.8 ratio 1.35 paired 1.10-1.78 vsST 8.0 p50 1.75
+  hot soc-Epin: CertKP 588067.1 BX+ 389037.0 ratio 0.66 paired 0.48-0.82 vsST 4.3 p50 6.46
+  rand com-yout: CertKP 1.5 BX+ 1.2 ratio 0.81 paired 0.81-0.81 vsST 84330.5 p50 0.79
+  rand email-En: CertKP 2.8 BX+ 12.0 ratio 4.28 paired 4.28-4.28 vsST 5752.8 p50 0.46
+  rand soc-Epin: CertKP 2.1 BX+ 16.5 ratio 7.76 paired 7.76-7.76 vsST 12702.6 p50 0.58

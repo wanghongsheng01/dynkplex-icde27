@@ -34,12 +34,17 @@ script that regenerates the tables and figures.
   `results/stress/` — output of the randomised harness.
 
 ## Build and run
-The scripts call the binaries `kplex12` and `kplex13`. Both are built from `code/kplex.cpp`: `kplex13`
-is the current file, and `kplex12` is the same file without the LazyMC+ refresh (the
-`refreshOnCore` function and the `KPLEX_EXT_CORESUB` branch inside LazyMC), which no other variant uses.
+`code/kplex.cpp` is the final build (`kplex15`). The scripts call it under the names of earlier builds
+(`kplex12`, `kplex13`, `kplex14`), which differ from it only as follows: `kplex12` lacks the LazyMC+
+refresh (the `refreshOnCore` function and the `KPLEX_EXT_CORESUB` branch inside LazyMC), which no other
+variant uses; `kplex14` adds the per-update instrumentation (traces, latency dumps, `tail10`) without
+changing any decision; `kplex15` also checks the deadline before each subproblem of a cache sweep, so that
+the time budget bounds the whole sweep. A run without a cache sweep executes the same code in all builds.
+Every record of a run that executed a sweep (`cache_builds > 0` and `del_global > 0`) comes from
+`kplex15` and carries `"kplex": 15` (see "Final build" below).
 ```
 g++ -O3 -march=native -std=c++17 -o code/kplex code/kplex.cpp     # or clang++
-cp code/kplex code/kplex12 && cp code/kplex code/kplex13            # identical for every variant but LazyMC+
+for b in 12 13 14 15; do cp code/kplex code/kplex$b; done          # see above
 bash scripts/fetch_solvers.sh external
 bash scripts/fetch_data.sh
 cd code && ./kplex brute 2000 1                                   # exhaustive check, small graphs
@@ -62,13 +67,37 @@ updates processed; this happens only where the static solver itself becomes slow
 `scripts/run_large.sh [orkut|friendster|all]` runs the static solvers, CertKP, BasicX and LazyMC on
 com-Orkut and com-Friendster on a Linux server (>= 64 GB / >= 128 GB RAM); results go to `results/large/`.
 
+## Review experiments and the final build (2026-11-06/07)
+- `code/run_v16.sh` and `code/run_v16b.sh` run the experiments added in response to the reviews
+  (`results/v16/`, summarised by `code/v16_facts.py <group>`): ten seeds (`seeds_*`), exhaustive
+  per-update agreement (`exact`), rebuilding communities (`hotrev_*`), non-adaptive takedown (`densest`),
+  windows of 1 day to 1 year on six temporal graphs (`twin_*`), 2x10^4-update and 10^6-update streams
+  (`long_*`), region and filter variants (`region_*`), the threshold alert (`thresh_*`), k = 5,
+  the DBLP runs with a 3-hour cap (`dblpfull`), the budget constant 0.1 and no budget (`budget2`),
+  LiveJournal (`lj`), runs executed one at a time (`p1`), LazyMC under the protocol of Sun et al.
+  (`fidelity`) and com-Orkut on a 16 GB machine (`orkut`). `results/v16/traces/` and `results/v16/lat/`
+  hold per-update traces and latency dumps.
+- `code/run_server.sh`, `run_server2.sh` and `run_server3.sh` run com-Orkut and com-Friendster on a
+  28-core, 110 GB Linux server (`results/server/`; `*.time` holds the peak resident memory).
+  `results/server/v17/` holds the `kplex15` re-runs of the server runs that executed a cache sweep; the paper
+  uses them in place of the CertKP records of `results/server/orkut*.jsonl` and `friendster_hot.jsonl`.
+- Final build. `code/run_v17.sh` and `code/run_v17b.sh` re-run with `kplex15` every earlier run that
+  executed a cache sweep (`results/v17/<v13..v16>/`, job lists `results/v17/jobs_*.txt`).
+  `code/merge_v17.py` replaces those records in `results/v13`-`v16` in place, matching on
+  (file, graph, k, stream, seed, variant), and moves the replaced `kplex14` records and dumps to
+  `results/superseded_kplex14/` with the same relative paths; it is idempotent. The repository already
+  contains the merged files; rerun `python3 merge_v17.py` after re-running `run_v17*.sh`.
+- `results/stress/kplex15.txt` is the randomised harness on the final build (plain; deadline checked at
+  every node; near-zero budget so that sweeps are interrupted).
+
 ## Result fields (selection)
 `dyn_avg_us`, `dyn_p50_us`, `dyn_p99_us`, `dyn_p999_us`, `dyn_max_ms` (update latency);
 `st_avg_ms` (static solver, self-reported time) and `st_wall_ms` (wall time incl. graph export);
 `mismatch` (checkpoints where the maintained size differs from the static optimum) and `invalid`
 (updates whose output is not a k-plex); `del_hit`, `del_global`, `cache_builds`, `cache_sub`,
 `cache_sub_inv`, `level_reuse`, `fallbacks`, `coresub_n` (mechanism counters); `init_s`
-(initialisation), `truncated` and `run_s` (run cap).
+(initialisation), `truncated` and `run_s` (run cap); `tail10` lists, for the ten slowest updates,
+[total, search, fallback, external, budget] in ms; `kplex` is 15 for records produced by the final build.
 
 ## Reproducing the paper
 ```
@@ -76,5 +105,7 @@ cd code && ./run_v13.sh 3 && ./run_v13b.sh 3     # about 6 h on a 10-core machin
 ./run_v14.sh 3                                    # about 4 h; then append results/v14/hot_{basic,repair,cache}
                                                   # to results/v13 and replace v13/lazymc_* and v13/lj_{lazymc,basicx}
 ./run_v15.sh 3                                    # about 5 h
-python3 make_paper.py && python3 paper_facts.py && python3 v15_facts.py
+./run_v16.sh 3 && ./run_v16b.sh                   # review experiments; server runs: run_server*.sh
+./run_v17.sh && ./run_v17b.sh && python3 merge_v17.py   # final build on every run with a cache sweep
+python3 make_paper.py && python3 paper_facts.py && python3 v15_facts.py && python3 v16_facts.py
 ```

@@ -5,7 +5,16 @@
 //   env KPLEX_ALGO=lazymc: LazyMC baseline (Sun et al., TKDE 2022), k = 1 only
 //   env KPLEX_REPAIR=1: local repair on deletions; KPLEX_CACHE=1: certificate cache + core bound
 //   kplex brute   trials seed            (randomised correctness test vs. brute force)
+// Instrumentation added for the pre-submission review (kplex14; default behaviour unchanged):
+//   streams hotrev (insertions re-insert deleted optimum edges) and takedown (non-adaptive: deletes the
+//   edges of the initial dense region in a fixed order); KPLEX_HOT_INSFRAC = insertion share (default 0.5)
+//   KPLEX_REGION=twohop|core (insertion region ablation), KPLEX_NONADJ (k = 2: y adjacent to u or v)
+//   KPLEX_THRESH_REL=d (alert "omega >= omega0 - d" instead of the maximum), KPLEX_APPROX (no global search)
+//   KPLEX_PI_REBUILD=N (drop the cache every N updates), KPLEX_WINSTATS=N (per-window averages)
+//   KPLEX_TRACE=file (omega after every update), KPLEX_LATDUMP=file (timestamp and latency per update)
+//   JSON tail10: the 10 slowest updates as [total, local search, fallback, external call, budget] in ms
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <unistd.h>
 #include <chrono>
@@ -250,7 +259,15 @@ static void buildLocalEdges(const DynGraph &G, const vector<int> &ids, LocalBB &
 }
 // Build a local subproblem over vertices ids (first nf forced), prune by the pair
 // common-neighbour bound w.r.t. every forced vertex and by degree, then branch.
+static SubResult solveLocal0(const DynGraph &G, const vector<int> &ids, int nf, int k, int t, bool decision);
+static double g_searchSum = 0;  // time in local decision searches (budgeted work)
 static SubResult solveLocal(const DynGraph &G, const vector<int> &ids, int nf, int k, int t, bool decision) {
+  auto t0 = Clock::now();
+  SubResult r = solveLocal0(G, ids, nf, k, t, decision);
+  g_searchSum += secs(t0);
+  return r;
+}
+static SubResult solveLocal0(const DynGraph &G, const vector<int> &ids, int nf, int k, int t, bool decision) {
   LocalBB bb;
   int L = (int)ids.size();
   bb.init(L, k);
@@ -413,6 +430,7 @@ static bool isKPlex(const DynGraph &G, const vector<int> &S, int k) {
 // checked; if it is missing or invalid, our engine finds one as a decision problem at omega - 1.
 // Reported time is the solver's wall time (process start to exit, file reading and solution
 // output included), without the time to write the graph file.
+static double g_extWallSum = 0, g_extOwnSum = 0;  // all external calls of the process
 struct ExtResult { int omega = -1; double wall = 0, own = 0, write = 0; string engine; vector<int> wit; };
 static const char *extEngine() { const char *e = getenv("KPLEX_EXT"); return e && *e ? e : nullptr; }
 static void writeU32(FILE *f, uint32_t x) { fwrite(&x, 4, 1, f); }
@@ -507,6 +525,7 @@ static ExtResult runExternal(const DynGraph &G, int k, bool wantWit = false) {
   if (r.omega <= 0) { fprintf(stderr, "external solver %s gave no answer; output:\n%s\n", e.c_str(), out.c_str()); exit(1); }
   if (getenv("KPLEX_EXT_LOG") && string(getenv("KPLEX_EXT_LOG")) == "2") fprintf(stderr, "%s", out.c_str());
   if (getenv("KPLEX_EXT_LOG")) fprintf(stderr, "[ext %s] omega=%d wall=%.3fs own=%.3fs write=%.3fs\n", e.c_str(), r.omega, r.wall, r.own, r.write);
+  g_extWallSum += r.wall; g_extOwnSum += r.own;
   return r;
 }
 // The exact static engine used outside the update path (initial answer, checkpoint baseline):
@@ -547,6 +566,9 @@ struct DynStats {
   long long ins = 0, del = 0, insSeeded = 0, insGrow = 0, delHit = 0, delRepairLocal = 0, delRepairSwap = 0, delGlobal = 0, delShrink = 0, cacheBuilds = 0, cacheSub = 0, invalidated = 0, warmWitness = 0, cacheSubInv = 0, levelReuse = 0, fallbacks = 0, invPassed = 0, coreSubN = 0;
   double tIns = 0, tDel = 0, tGlobal = 0;
   long long nodes = 0;
+  double curFb = 0, curExt = 0;  // per update: time in fallback solves / in external whole-graph or core calls
+  vector<int> xsizes;            // size of the insertion region X of every growing-insertion test
+  long long fwdSum = 0, fwdCnt = 0;  // forward-region sizes of cache subproblems
 };
 // Core-number maintenance under edge updates. Deletion peels with fresh max-core-degree
 // counts (as in OrderRemoval). Insertion is order-based (Zhang et al., ICDE'17, in the
@@ -798,24 +820,44 @@ struct DynKPlex {
     disarm();
     ds.fallbacks++;
     g_lastExtWall = 0;
+    auto tf = Clock::now();
     vector<int> b = solveOnCore(t);
+    ds.curFb += secs(tf);
     if (g_lastExtWall > 0) stEst = g_lastExtWall;
     return b;
   }
+  double budgetMs() const { return useBudget ? budgetC * stEst * 1e3 : 0; }
+  // review instrumentation (see the header): region ablation, alert threshold, approximate mode
+  int regionMode = !getenv("KPLEX_REGION") ? 0 : string(getenv("KPLEX_REGION")) == "twohop" ? 1 : 2;
+  bool nonAdj = getenv("KPLEX_NONADJ") != nullptr, recordX = false;
+  int thresh = 0;
+  bool approx = getenv("KPLEX_APPROX") != nullptr;
+  int threshold() const { return thresh; }
+  void dropCache() { cacheT = -1; insLog.clear(); }
   void init() {
     StaticStats st; setBest(solveExact(G, k, true, st));
     if (extEngine()) stEst = g_lastExtWall;
     if (useCoreMaint) { cmt = new CoreMaint(G); cmt->init(); }
     else if (useCoreUB) { coreB = coreDecomp(G, k).core; insSince = 0; }
+    if (getenv("KPLEX_THRESH_REL")) thresh = max(1, omega() - atoi(getenv("KPLEX_THRESH_REL")));
     if (useCache && useWarm) warmCache();
   }
 
   // Vertices that may share a k-plex of size >= t with both u and v (edge (u,v) present).
   // Returns false if the pair bounds already rule out such a plex. ids starts with u, v.
   bool pairCandidates(int u, int v, int t, vector<int> &ids) {
+    bool ok = pairCandidates0(u, v, t, ids);
+    if (recordX) ds.xsizes.push_back((int)ids.size());
+    return ok;
+  }
+  bool pairCandidates0(int u, int v, int t, vector<int> &ids) {
     int need = t - k;
     ids = {u, v};
     if (ub(u) < need || ub(v) < need) return false;
+    if (regionMode == 2 && k > 1) {  // ablation: the whole (t-k)-core
+      for (int x = 0; x < G.n; x++) if (x != u && x != v && ub(x) >= need) ids.push_back(x);
+      return (int)ids.size() >= t;
+    }
     auto heavy = [&](int x) { return ub(x) >= need; };
     if (k == 1) {  // a clique containing u and v lies in their common neighbourhood
       const auto &a = G.adj[u], &b = G.adj[v];
@@ -839,7 +881,9 @@ struct DynKPlex {
       for (int y : touched) {
         if (y == u || y == v) continue;
         bool au = G.has(u, y), av = G.has(v, y);
-        bool ok = cntU[y] >= (au ? t - 2 * k : t - 2 * k + 2) && cntV[y] >= (av ? t - 2 * k : t - 2 * k + 2);
+        bool ok = regionMode == 1 ? (au || cntU[y] > 0) && (av || cntV[y] > 0)  // ablation: within two hops of both
+                                  : cntU[y] >= (au ? t - 2 * k : t - 2 * k + 2) && cntV[y] >= (av ? t - 2 * k : t - 2 * k + 2);
+        if (ok && nonAdj && k == 2 && !au && !av) ok = false;  // y may miss at most k-1 = 1 of u, v
         if (ok) ids.push_back(y);
       }
       for (int y : touched) cntU[y] = cntV[y] = 0;
@@ -852,7 +896,10 @@ struct DynKPlex {
   // Is there a k-plex of size t containing both u and v (edge (u,v) present)?
   bool seeded(int u, int v, int t, vector<int> &out, bool *ab = nullptr) {
     vector<int> ids;
-    if (!pairCandidates(u, v, t, ids)) return false;
+    recordX = true;
+    bool pass = pairCandidates(u, v, t, ids);
+    recordX = false;
+    if (!pass) return false;
     ds.insSeeded++;
     SubResult r = solveLocal(G, ids, 2, k, t, true);
     ds.nodes += r.nodes;
@@ -935,6 +982,7 @@ struct DynKPlex {
       for (int w : nb) cntV[w] = 0;
     }
     if ((int)ids.size() < t) return false;
+    ds.fwdSum += (long long)ids.size(); ds.fwdCnt++;
     ds.cacheSub++;
     if (pendInv[v]) ds.cacheSubInv++;
     SubResult r = solveLocal(G, ids, 1, k, t, true);
@@ -953,6 +1001,9 @@ struct DynKPlex {
     while (!pending.empty()) {
       int v = pending.back();
       if (cleared[v]) { pending.pop_back(); continue; }
+      // the budget covers the whole sweep, not only the nodes of each search: a sweep of many
+      // small subproblems never reaches the per-node deadline check of the search engine
+      if (g_deadline != Clock::time_point::max() && Clock::now() > g_deadline) { if (ab) *ab = true; return {}; }
       bool a = false;
       if (trySub(v, t, out, &a)) return out;  // v stays pending: it may still start a plex
       if (a) { if (ab) *ab = true; return {}; }  // budget exceeded: v stays pending, uncertified
@@ -984,6 +1035,16 @@ struct DynKPlex {
       else if (cacheT >= 0) { insLog.push_back({u, v}); if (insLog.size() > (1u << 20)) { cacheT = -1; insLog.clear(); } }
     }
     bool ab = false;
+    if (thresh > 0) {  // alert mode: only a missing witness of size thresh needs a search
+      if (omega() < thresh) {
+        arm();
+        if (seeded(u, v, thresh, out, &ab)) { setBest(out); ds.insGrow++; }
+        else if (ab) { vector<int> b = fallbackSolve(thresh); if ((int)b.size() >= thresh) { setBest(b); ds.insGrow++; } }
+        disarm();
+      }
+      ds.tIns += secs(t0);
+      return;
+    }
     arm();
     if (seeded(u, v, omega() + 1, out, &ab)) { setBest(out); ds.insGrow++; }
     else if (ab) { vector<int> b = fallbackSolve(omega() + 1); if ((int)b.size() > omega()) { setBest(b); ds.insGrow++; } }
@@ -1034,18 +1095,22 @@ struct DynKPlex {
       ds.delHit++;
       int w = omega(), du = 0, dv = 0;
       for (int x : best) { if (x != u && G.has(u, x)) du++; if (x != v && G.has(v, x)) dv++; }
-      if (w - du > k || w - dv > k) {
+      if ((w - du > k || w - dv > k) && thresh > 0 && (w - 1 >= thresh || w < thresh)) {
+        // alert mode: S*\{u} is still a witness of size >= thresh, or there was none
+        vector<int> b2; for (int x : best) if (x != u) b2.push_back(x);
+        setBest(b2);
+      } else if (w - du > k || w - dv > k) {
         // the old optimum broke; OPT is w or w-1. First try a local repair that keeps
         // S*\{u,v} and adds two vertices; then fall back to a global decision search.
         arm();
         bool ab = false;
         if (useRepair && repair(u, v, &ab)) { disarm(); ds.delRepairSwap++; ds.tDel += secs(t0); return; }
         auto tg = Clock::now();
-        ds.delGlobal++;
         vector<int> b;
-        if (extGlobal()) { disarm(); ab = false; b = coreSub ? solveOnCore(w) : extSolveWhole(); if ((int)b.size() < w) b.clear(); }
-        else if (useCache) b = ab ? vector<int>{} : globalFind(w, &ab);
-        else { disarm(); ab = false; StaticStats st; b = staticSolve(G, k, w - 1, true, st); ds.nodes += st.nodes; }
+        if (approx) { disarm(); ab = false; }  // approximate mode: no global search, the answer shrinks
+        else if (extGlobal()) { ds.delGlobal++; disarm(); ab = false; b = coreSub ? solveOnCore(w) : extSolveWhole(); if ((int)b.size() < w) b.clear(); ds.curExt += secs(tg); }
+        else if (useCache) { ds.delGlobal++; b = ab ? vector<int>{} : globalFind(w, &ab); }
+        else { ds.delGlobal++; disarm(); ab = false; StaticStats st; b = staticSolve(G, k, w - 1, true, st); ds.nodes += st.nodes; }
         disarm();
         if (ab) { b = fallbackSolve(w); if ((int)b.size() < w) b.clear(); }
         ds.tGlobal += secs(tg);
@@ -1082,6 +1147,7 @@ struct LazyMC {
   int omega() const { return (int)best.size(); }
   void setBest(const vector<int> &b) { for (int x : best) inBest[x] = 0; best = b; for (int x : best) inBest[x] = 1; }
   const CoreMaint *core() const { return &cm; } int cappedM() const { return mCapped; }
+  double budgetMs() const { return 0; } int threshold() const { return 0; } void dropCache() {}
   vector<int> common(int u, int v) const {
     vector<int> c;
     const auto &a = G.adj[u], &b = G.adj[v];
@@ -1289,6 +1355,7 @@ struct LazyMC {
         else { c = staticSolve(G, 1, (int)H.size(), false, st); ds.nodes += st.nodes; }
       }
       ds.tGlobal += secs(tg);
+      ds.curExt += secs(tg);
       if ((int)c.size() > (int)H.size()) setBest(c);
     }
     if (omega() < maxCha) maxCha = omega();  // adjust on fact
@@ -1298,31 +1365,33 @@ struct LazyMC {
 };
 
 // ---------------------------------------------------------------- IO
-struct Loaded { DynGraph G; vector<pair<int, int>> temporalOrder; };
+struct Loaded { DynGraph G; vector<pair<int, int>> temporalOrder; vector<long long> temporalTime; };
 static Loaded loadGraph(const string &path, bool keepOrder) {
-  ifstream in(path);
+  bool gz = path.size() > 3 && path.compare(path.size() - 3, 3, ".gz") == 0;  // read .gz without unpacking
+  FILE *in = gz ? popen(("gzip -dc '" + path + "'").c_str(), "r") : fopen(path.c_str(), "r");
   if (!in) { cerr << "cannot open " << path << "\n"; exit(1); }
   unordered_map<long long, int> id;
   vector<pair<int, int>> edges;
   vector<pair<long long, pair<int, int>>> timed;
-  string line;
-  while (getline(in, line)) {
-    if (line.empty() || line[0] == '#' || line[0] == '%') continue;
-    istringstream ss(line);
+  char *buf = nullptr; size_t cap = 0;
+  while (getline(&buf, &cap, in) > 0) {
+    if (buf[0] == '#' || buf[0] == '%' || buf[0] == '\n') continue;
     long long a, b, ts = 0;
-    if (!(ss >> a >> b)) continue;
-    ss >> ts;
+    if (sscanf(buf, "%lld %lld %lld", &a, &b, &ts) < 2) continue;
     if (a == b) continue;
     int x = id.emplace(a, (int)id.size()).first->second, y = id.emplace(b, (int)id.size()).first->second;
     if (keepOrder) timed.push_back({ts, {x, y}}); else edges.push_back({x, y});
   }
-  Loaded L{DynGraph((int)id.size()), {}};
+  free(buf);
+  if (gz) pclose(in); else fclose(in);
+  Loaded L{DynGraph((int)id.size()), {}, {}};
   if (keepOrder) {
     stable_sort(timed.begin(), timed.end(), [](auto &p, auto &q) { return p.first < q.first; });
     // every interaction, in time order (repeated pairs included: they refresh the edge in a window)
     for (auto &p : timed) {
       int x = min(p.second.first, p.second.second), y = max(p.second.first, p.second.second);
       L.temporalOrder.push_back({x, y});
+      L.temporalTime.push_back(p.first);
     }
   } else {
     for (auto [x, y] : edges) {
@@ -1366,6 +1435,7 @@ static int modeDynT(int argc, char **argv) {
   mt19937_64 rng(seed);
   // update stream
   vector<pair<int, pair<int, int>>> ops;  // (+1 insert / -1 delete, edge)
+  vector<long long> opTime;               // interaction timestamp of each op (temporal streams)
   size_t winStart = 0, winEnd = 0;
   if (temporal) {
     // Sliding window over interactions: an edge is present while at least one of its interactions
@@ -1373,12 +1443,32 @@ static int modeDynT(int argc, char **argv) {
     // steps that change the graph become updates.
     auto &E = L.temporalOrder;
     winEnd = (size_t)(E.size() * wfrac);
-    unordered_map<long long, int> mult;
-    auto key = [&](const pair<int, int> &e) { return (long long)e.first * G.n + e.second; };
-    for (size_t i = 0; i < winEnd; i++) if (mult[key(E[i])]++ == 0) G.add(E[i].first, E[i].second);
-    for (int q = 0; q < Q && winEnd + q < E.size(); q++) {
-      if (mult[key(E[winEnd + q])]++ == 0) ops.push_back({+1, E[winEnd + q]});
-      if (!tinc && --mult[key(E[winStart + q])] == 0) ops.push_back({-1, E[winStart + q]});
+    if (getenv("KPLEX_WIN_SECONDS") && !tinc) {
+      // time-based window of W seconds ending at the interaction at fraction wfrac of the history;
+      // each of the Q steps admits the next interaction and expires every interaction older than W
+      long long W = atoll(getenv("KPLEX_WIN_SECONDS"));
+      auto &T = L.temporalTime;
+      size_t s0 = winEnd;
+      while (s0 > 0 && T[s0 - 1] > T[winEnd] - W) s0--;
+      unordered_map<long long, int> mult;
+      auto key = [&](const pair<int, int> &e) { return (long long)e.first * G.n + e.second; };
+      for (size_t i = s0; i < winEnd; i++) if (mult[key(E[i])]++ == 0) G.add(E[i].first, E[i].second);
+      size_t old = s0;
+      for (int q = 0; q < Q && winEnd + q < E.size(); q++) {
+        size_t i = winEnd + q;
+        if (mult[key(E[i])]++ == 0) { ops.push_back({+1, E[i]}); opTime.push_back(T[i]); }
+        while (old < i && T[old] <= T[i] - W) { if (--mult[key(E[old])] == 0) { ops.push_back({-1, E[old]}); opTime.push_back(T[i]); } old++; }
+      }
+      winStart = s0;
+    } else {
+      unordered_map<long long, int> mult;
+      auto key = [&](const pair<int, int> &e) { return (long long)e.first * G.n + e.second; };
+      for (size_t i = 0; i < winEnd; i++) if (mult[key(E[i])]++ == 0) G.add(E[i].first, E[i].second);
+      for (int q = 0; q < Q && winEnd + q < E.size(); q++) {
+        long long ts = L.temporalTime[winEnd + q];
+        if (mult[key(E[winEnd + q])]++ == 0) { ops.push_back({+1, E[winEnd + q]}); opTime.push_back(ts); }
+        if (!tinc && --mult[key(E[winStart + q])] == 0) { ops.push_back({-1, E[winStart + q]}); opTime.push_back(ts); }
+      }
     }
   }
   auto tInit = Clock::now();
@@ -1401,10 +1491,21 @@ static int modeDynT(int argc, char **argv) {
     replay = true;
   }
   vector<int> dense;  // for hot stream: vertices with core >= omega-k at start
-  if (stream == "hot") {
+  bool hotLike = stream == "hot" || stream == "hotrev" || stream == "takedown";
+  vector<pair<int, int>> denseEdges;  // takedown: edges inside the initial dense region, fixed order
+  size_t denseNext = 0;
+  if (hotLike) {
     CoreInfo ci = coreDecomp(G, k);
-    for (int v = 0; v < G.n; v++) if (ci.core[v] >= omega0 - k) dense.push_back(v);
+    vector<char> inD(G.n, 0);
+    for (int v = 0; v < G.n; v++) if (ci.core[v] >= omega0 - k) { dense.push_back(v); inD[v] = 1; }
+    if (stream == "takedown") {  // densest part first: by the smaller core number of the endpoints, ties shuffled
+      for (int a : dense) for (int b : G.adj[a]) if (a < b && inD[b]) denseEdges.push_back({a, b});
+      shuffle(denseEdges.begin(), denseEdges.end(), rng);
+      stable_sort(denseEdges.begin(), denseEdges.end(), [&](auto &x, auto &y) { return min(ci.core[x.first], ci.core[x.second]) > min(ci.core[y.first], ci.core[y.second]); });
+    }
   }
+  double insFrac = getenv("KPLEX_HOT_INSFRAC") ? atof(getenv("KPLEX_HOT_INSFRAC")) : 0.5;
+  vector<pair<int, int>> deletedOpt;  // hotrev: deleted optimum edges, re-inserted later
   auto randEdgeExisting = [&](pair<int, int> &e) {
     for (int tries = 0; tries < 1000; tries++) {
       size_t i = rng() % elist.size();
@@ -1416,6 +1517,14 @@ static int modeDynT(int argc, char **argv) {
   };
   vector<double> lat;
   vector<double> stT, warmT, stW;
+  vector<array<float, 4>> tailInfo;  // per update: fallback ms, external ms, budget ms, local search ms
+  double gapSum = 0; int gapMax = 0; long long subopt = 0, alertBad = 0;
+  double extWall0 = g_extWallSum, extOwn0 = g_extOwnSum, extSampleWall = 0, extSampleOwn = 0;
+  FILE *traceF = getenv("KPLEX_TRACE") ? fopen(getenv("KPLEX_TRACE"), "w") : nullptr;
+  FILE *latF = getenv("KPLEX_LATDUMP") ? fopen(getenv("KPLEX_LATDUMP"), "w") : nullptr;
+  int piRebuild = getenv("KPLEX_PI_REBUILD") ? atoi(getenv("KPLEX_PI_REBUILD")) : 0;
+  int winStats = getenv("KPLEX_WINSTATS") ? atoi(getenv("KPLEX_WINSTATS")) : 0;
+  vector<double> winUs, winFwd; double winAcc = 0; long long winN = 0, fwdS0 = 0, fwdC0 = 0;
   long long mismatches = 0, invalid = 0, samples = 0;
   vector<char> isIns;
   const char *cv = getenv("KPLEX_COREVERIFY");
@@ -1423,8 +1532,12 @@ static int modeDynT(int argc, char **argv) {
   long long coreChecks = 0, coreBad = 0;
   bool noWarm = getenv("KPLEX_NOWARM") != nullptr;  // skip the warm-start baseline at checkpoints
   auto runSample = [&](bool wasIns, int omegaBefore, bool bestStillValid) {
+    double ew = g_extWallSum, eo = g_extOwnSum;
     StaticStats s1; int w1 = 0; solveExact(G, k, false, s1, &w1);
+    extSampleWall += g_extWallSum - ew; extSampleOwn += g_extOwnSum - eo;
     stT.push_back(s1.time); stW.push_back(extEngine() ? g_lastExtWall : s1.time);
+    if (D.threshold() > 0) { samples++; if ((w1 >= D.threshold()) != (D.omega() >= D.threshold())) alertBad++; return; }
+    if (w1 > D.omega()) { gapSum += w1 - D.omega(); gapMax = max(gapMax, w1 - D.omega()); subopt++; }
     if (noWarm) { samples++; if (w1 != D.omega()) mismatches++; return; }
     // warm-start baseline: global search from the previous answer
     int lbw = wasIns ? omegaBefore : (bestStillValid ? omegaBefore : omegaBefore - 1);
@@ -1450,9 +1563,17 @@ static int modeDynT(int argc, char **argv) {
       typ = (rng() & 1) ? +1 : -1;
       if (typ > 0) { do { e = {(int)(rng() % G.n), (int)(rng() % G.n)}; } while (e.first == e.second || G.has(e.first, e.second)); }
       else if (!randEdgeExisting(e)) continue;
-    } else {  // hot
-      typ = (rng() & 1) ? +1 : -1;
-      if (typ > 0) {
+    } else {  // hot, hotrev, takedown
+      typ = insFrac == 0.5 ? ((rng() & 1) ? +1 : -1) : ((double)(rng() % 1000000) < insFrac * 1e6 ? +1 : -1);  // 0.5: as before
+      if (typ > 0 && stream == "hotrev" && !deletedOpt.empty() && (rng() & 1)) {  // re-form the community
+        size_t i = rng() % deletedOpt.size();
+        e = deletedOpt[i]; deletedOpt[i] = deletedOpt.back(); deletedOpt.pop_back();
+        if (G.has(e.first, e.second)) continue;
+      } else if (typ < 0 && stream == "takedown" && (rng() & 1)) {  // next edge of the dense region
+        while (denseNext < denseEdges.size() && !G.has(denseEdges[denseNext].first, denseEdges[denseNext].second)) denseNext++;
+        if (denseNext == denseEdges.size()) continue;
+        e = denseEdges[denseNext++];
+      } else if (typ > 0) {
         int tries = 0;
         do {
           int a = dense[rng() % dense.size()];
@@ -1462,11 +1583,12 @@ static int modeDynT(int argc, char **argv) {
         } while ((e.first == e.second || G.has(e.first, e.second)) && ++tries < 1000);
         if (tries >= 1000) continue;
       } else {
-        if ((rng() % 2) == 0 && D.omega() >= 2) {  // adversarial: an edge inside the current optimum
+        if (stream != "takedown" && (rng() % 2) == 0 && D.omega() >= 2) {  // adversarial: an edge inside the current optimum
           vector<pair<int, int>> in;
           for (size_t i = 0; i < D.best.size(); i++) for (size_t j = i + 1; j < D.best.size(); j++) if (G.has(D.best[i], D.best[j])) in.push_back({D.best[i], D.best[j]});
           if (in.empty()) continue;
           e = in[rng() % in.size()];
+          if (stream == "hotrev") deletedOpt.push_back(e);
         } else {
           int a = dense[rng() % dense.size()];
           if (G.adj[a].empty()) continue;
@@ -1476,10 +1598,24 @@ static int modeDynT(int argc, char **argv) {
     }
     int omegaBefore = D.omega();
     lastTyp = typ; lastOmegaBefore = omegaBefore;
+    if (piRebuild > 0 && q > 0 && q % piRebuild == 0) D.dropCache();
+    D.ds.curFb = D.ds.curExt = 0;
+    double budget = D.budgetMs(), search0 = g_searchSum;
     auto t0 = Clock::now();
     if (typ > 0) { D.insertEdge(e.first, e.second); if (!temporal) elist.push_back(e); }
     else D.deleteEdge(e.first, e.second);
     lat.push_back(secs(t0));
+    tailInfo.push_back({(float)(D.ds.curFb * 1e3), (float)(D.ds.curExt * 1e3), (float)budget, (float)((g_searchSum - search0) * 1e3)});
+    if (traceF) fprintf(traceF, "%d\n", D.omega());
+    if (latF) fprintf(latF, "%lld %.3f\n", replay && q < (int)opTime.size() ? opTime[q] : (long long)q, lat.back() * 1e6);
+    if (winStats > 0) {
+      winAcc += lat.back(); winN++;
+      if (winN == winStats) {
+        winUs.push_back(winAcc / winN * 1e6);
+        winFwd.push_back(D.ds.fwdCnt > fwdC0 ? (double)(D.ds.fwdSum - fwdS0) / (D.ds.fwdCnt - fwdC0) : 0);
+        fwdS0 = D.ds.fwdSum; fwdC0 = D.ds.fwdCnt; winAcc = 0; winN = 0;
+      }
+    }
     if (!isKPlex(G, D.best, k)) invalid++;
     if (sampleEvery > 0 && q % sampleEvery == sampleEvery - 1) runSample(typ > 0, omegaBefore, D.omega() == omegaBefore);
     if (coreVerify > 0 && D.core() && q % coreVerify == coreVerify - 1) { coreChecks++; if (coreDecomp(G, 1).core != D.core()->K) coreBad++; }
@@ -1487,6 +1623,39 @@ static int modeDynT(int argc, char **argv) {
   if (truncated && samples == 0 && !lat.empty()) runSample(lastTyp > 0, lastOmegaBefore, D.omega() == lastOmegaBefore);
   if (coreVerify > 0 && D.core()) { coreChecks++; if (coreDecomp(G, 1).core != D.core()->K || !D.core()->checkOrder()) coreBad++; }
   if (coreVerify > 0) fprintf(stderr, "core verify: %lld checks, %lld bad\n", coreChecks, coreBad);
+  if (traceF) fclose(traceF);
+  if (latF) fclose(latF);
+  // review instrumentation: insertion-region sizes, the 10 slowest updates, external-call time
+  string extra;
+  {
+    char b[512];
+    vector<double> xs(D.ds.xsizes.begin(), D.ds.xsizes.end());
+    double xm = xs.empty() ? 0 : accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
+    snprintf(b, sizeof b, ",\"x_n\":%zu,\"x_mean\":%.1f,\"x_p50\":%.0f,\"x_p99\":%.0f,\"x_max\":%.0f,\"fwd_mean\":%.1f",
+             xs.size(), xm, pct(xs, 0.5), pct(xs, 0.99), xs.empty() ? 0 : *max_element(xs.begin(), xs.end()),
+             D.ds.fwdCnt ? (double)D.ds.fwdSum / D.ds.fwdCnt : 0);
+    extra += b;
+    snprintf(b, sizeof b, ",\"ext_wall_s\":%.4f,\"ext_own_s\":%.4f,\"gap_sum\":%.0f,\"gap_max\":%d,\"subopt\":%lld,\"thresh\":%d,\"alert_bad\":%lld",
+             g_extWallSum - extWall0 - extSampleWall, g_extOwnSum - extOwn0 - extSampleOwn, gapSum, gapMax, subopt, D.threshold(), alertBad);
+    extra += b;
+    vector<int> idx(lat.size()); iota(idx.begin(), idx.end(), 0);
+    int top = min<int>(10, (int)idx.size());
+    partial_sort(idx.begin(), idx.begin() + top, idx.end(), [&](int a, int c) { return lat[a] > lat[c]; });
+    extra += ",\"tail10\":[";
+    for (int i = 0; i < top; i++) {
+      snprintf(b, sizeof b, "%s[%.2f,%.2f,%.2f,%.2f,%.2f]", i ? "," : "", lat[idx[i]] * 1e3, tailInfo[idx[i]][3], tailInfo[idx[i]][0], tailInfo[idx[i]][1], tailInfo[idx[i]][2]);
+      extra += b;
+    }
+    extra += "]";
+    if (winStats > 0) {
+      extra += ",\"win_us\":[";
+      for (size_t i = 0; i < winUs.size(); i++) { snprintf(b, sizeof b, "%s%.2f", i ? "," : "", winUs[i]); extra += b; }
+      extra += "],\"win_fwd\":[";
+      for (size_t i = 0; i < winFwd.size(); i++) { snprintf(b, sizeof b, "%s%.1f", i ? "," : "", winFwd[i]); extra += b; }
+      extra += "]";
+    }
+    if (getenv("KPLEX_TAG")) { snprintf(b, sizeof b, ",\"tag\":\"%s\"", getenv("KPLEX_TAG")); extra += b; }
+  }
   double dynTotal = accumulate(lat.begin(), lat.end(), 0.0);
   double stAvg = stT.empty() ? 0 : accumulate(stT.begin(), stT.end(), 0.0) / stT.size();
   double stWall = stW.empty() ? 0 : accumulate(stW.begin(), stW.end(), 0.0) / stW.size();
@@ -1500,12 +1669,12 @@ static int modeDynT(int argc, char **argv) {
          "\"t_ins_s\":%.4f,\"t_del_s\":%.4f,\"t_global_s\":%.4f,\"samples\":%lld,\"st_avg_ms\":%.3f,\"warm_avg_ms\":%.3f,"
          "\"speedup_vs_st\":%.1f,\"speedup_vs_warm\":%.1f,\"mismatch\":%lld,\"invalid\":%lld,"
          "\"core_alg\":\"%s\",\"core_s\":%.4f,\"core_visited\":%lld,\"core_relabels\":%lld,\"static_engine\":\"%s\","
-         "\"seed\":%u,\"st_wall_ms\":%.3f,\"cache_sub_inv\":%lld,\"level_reuse\":%lld,\"fallbacks\":%lld,\"inv_passes\":%lld,\"m_capped\":%d,\"dyn_p999_us\":%.2f,\"truncated\":%d,\"run_s\":%.1f,\"coresub_n\":%lld}\n",
+         "\"seed\":%u,\"st_wall_ms\":%.3f,\"cache_sub_inv\":%lld,\"level_reuse\":%lld,\"fallbacks\":%lld,\"inv_passes\":%lld,\"m_capped\":%d,\"dyn_p999_us\":%.2f,\"truncated\":%d,\"run_s\":%.1f,\"coresub_n\":%lld%s}\n",
          path.c_str(), G.n, G.m, k, stream.c_str(), lat.size(), omega0, D.omega(), initTime, dynTotal, dynAvg * 1e6, pct(lat, 0.5) * 1e6, pct(lat, 0.99) * 1e6,
          lat.empty() ? 0 : *max_element(lat.begin(), lat.end()) * 1e3, s.ins, s.insSeeded, s.insGrow, s.del, s.delHit, s.delRepairLocal, s.delRepairSwap, s.delGlobal, s.delShrink, s.cacheBuilds, s.cacheSub, s.invalidated, s.warmWitness,
          s.tIns, s.tDel, s.tGlobal, samples, stAvg * 1e3, warmAvg * 1e3, dynAvg > 0 ? stAvg / dynAvg : 0, dynAvg > 0 ? warmAvg / dynAvg : 0, mismatches, invalid,
          cm ? (cm->ordered ? "order" : "trav") : "none", cm ? cm->secs : 0.0, cm ? cm->visited : 0LL, cm ? cm->relabels : 0LL, extEngine() ? extEngine() : "ours",
-         seed, stWall * 1e3, s.cacheSubInv, s.levelReuse, s.fallbacks, s.invPassed, D.cappedM(), pct(lat, 0.999) * 1e6, truncated, secs(tRun), s.coreSubN);
+         seed, stWall * 1e3, s.cacheSubInv, s.levelReuse, s.fallbacks, s.invPassed, D.cappedM(), pct(lat, 0.999) * 1e6, truncated, secs(tRun), s.coreSubN, extra.c_str());
   return 0;
 }
 

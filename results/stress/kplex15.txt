@@ -1,0 +1,7 @@
+kplex15 (sweep-level budget check), 2026-11-07
+./stress 3000 11
+fallbacks=0 levelReuse=2029 checks=196042 bad=0 certChecks=698441 certBad=0 pendingInvariantBad=0 lazymcBad=0
+STRESS_BUDGET=1e-9 STRESS_EVERY=1 ./stress 3000 12
+fallbacks=52484 levelReuse=1952 checks=196082 bad=0 certChecks=650828 certBad=0 pendingInvariantBad=0 lazymcBad=0
+STRESS_BUDGET=1e-9 ./stress 3000 13
+fallbacks=24574 levelReuse=2005 checks=196231 bad=0 certChecks=659806 certBad=0 pendingInvariantBad=0 lazymcBad=0

@@ -1,0 +1,6 @@
+{"graph":"../data/com-orkut.ungraph.txt.gz","n":3072441,"m":117185083,"k":1,"engine":"mcbrb","omega":51,"wall_s":25.8808,"own_s":24.2150,"write_s":0.9293}
+{"graph":"../data/com-orkut.ungraph.txt.gz","n":3072441,"m":117185083,"k":1,"engine":"pmc","omega":51,"wall_s":214.0649,"own_s":-1.0000,"write_s":11.6144}
+{"graph":"../data/com-orkut.ungraph.txt.gz","n":3072441,"m":117185083,"k":2,"engine":"kpex","omega":58,"wall_s":56.9639,"own_s":56.6692,"write_s":0.9233}
+{"graph":"../data/com-orkut.ungraph.txt.gz","n":3072441,"m":117185083,"k":2,"engine":"kplext","omega":58,"wall_s":206.2312,"own_s":204.5675,"write_s":0.9127}
+{"graph":"../data/com-orkut.ungraph.txt.gz","n":3072441,"m":117185083,"k":3,"engine":"kpex","omega":65,"wall_s":46.5768,"own_s":46.2811,"write_s":0.9192}
+{"graph":"../data/com-orkut.ungraph.txt.gz","n":3072441,"m":117185083,"k":3,"engine":"kplext","omega":65,"wall_s":277.6662,"own_s":276.0097,"write_s":0.9175}
