@@ -1,0 +1,6 @@
+*** After core-truss co-pruning: n = 467, m = 19,187, density = 0.1763
+prune_cnt: 384, max_n: 184, min_density: 0.4734, avg_density: 0.6838
+search_cnt: 384, max_n: 184, min_density: 0.4734, avg_density: 0.6838
+*** Search time: 21,708
+	Maximum kPlex Size: 21, Total Time: 132,932 (microseconds)
+

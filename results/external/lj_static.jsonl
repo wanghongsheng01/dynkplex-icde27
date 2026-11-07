@@ -1,0 +1,4 @@
+[ext mcbrb] omega=321 wall=1.413s own=0.000s write=0.548s
+{"graph":"../data/soc-LiveJournal1.txt","n":4846609,"m":42851237,"k":1,"engine":"mcbrb","omega":321,"wall_s":1.4127,"own_s":0.0000,"write_s":0.5480}
+{"graph":"../data/soc-LiveJournal1.txt","n":4846609,"m":42851237,"k":2,"engine":"kpex","omega":337,"wall_s":1.2320,"own_s":1.1683,"write_s":0.5284}
+{"graph":"../data/soc-LiveJournal1.txt","n":4846609,"m":42851237,"k":3,"engine":"kpex","omega":351,"wall_s":1.0519,"own_s":0.9762,"write_s":0.5364}

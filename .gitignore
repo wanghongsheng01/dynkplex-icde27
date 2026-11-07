@@ -1,5 +1,5 @@
-data/
-external/
+/data/
+/external/
 code/ext_tmp/
 tmp_ext/
 bin/

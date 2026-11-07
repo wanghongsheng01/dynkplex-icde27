@@ -1,0 +1,3 @@
+sh: line 1: 13773 Terminated: 15          ../external/LijunChang_Maximum-kPlex/kPlexS -g './ext_tmp/ext_13770' -a exact -k 3 -b 2>&1
+external solver kplexs gave no answer; output:
+

@@ -1,0 +1,87 @@
+{"graph": "../data/email-Enron.txt", "n": 36692, "m": 183831, "k": 1, "omega": 20, "heur": 20, "kept": 2276, "time": 0.03, "nodes": 40, "sub": 2231, "valid": 1, "engine": "ours", "wall_s": 0.03}
+{"graph": "../data/email-Enron.txt", "n": 36692, "m": 183831, "k": 2, "omega": 22, "heur": 22, "kept": 2162, "time": 0.0385, "nodes": 5881, "sub": 588, "valid": 1, "engine": "ours", "wall_s": 0.0385}
+{"graph": "../data/email-Enron.txt", "n": 36692, "m": 183831, "k": 3, "omega": 24, "heur": 24, "kept": 2055, "time": 0.0402, "nodes": 12255, "sub": 539, "valid": 1, "engine": "ours", "wall_s": 0.0402}
+{"graph": "../data/ca-AstroPh.txt", "n": 18771, "m": 198050, "k": 1, "omega": 57, "heur": 57, "kept": 0, "time": 0.002, "nodes": 0, "sub": 0, "valid": 1, "engine": "ours", "wall_s": 0.002}
+{"graph": "../data/ca-AstroPh.txt", "n": 18771, "m": 198050, "k": 2, "omega": 57, "heur": 57, "kept": 57, "time": 0.0021, "nodes": 0, "sub": 0, "valid": 1, "engine": "ours", "wall_s": 0.0021}
+{"graph": "../data/ca-AstroPh.txt", "n": 18771, "m": 198050, "k": 3, "omega": 57, "heur": 57, "kept": 113, "time": 0.0024, "nodes": 0, "sub": 0, "valid": 1, "engine": "ours", "wall_s": 0.0024}
+{"graph": "../data/soc-Epinions1.txt", "n": 75879, "m": 405740, "k": 1, "omega": 23, "heur": 22, "kept": 5004, "time": 0.0954, "nodes": 4344, "sub": 4922, "valid": 1, "engine": "ours", "wall_s": 0.0954}
+{"graph": "../data/soc-Epinions1.txt", "n": 75879, "m": 405740, "k": 2, "omega": 28, "heur": 27, "kept": 4315, "time": 0.188, "nodes": 94198, "sub": 1107, "valid": 1, "engine": "ours", "wall_s": 0.188}
+{"graph": "../data/soc-Epinions1.txt", "n": 75879, "m": 405740, "k": 3, "omega": 32, "heur": 31, "kept": 3900, "time": 0.1871, "nodes": 124810, "sub": 855, "valid": 1, "engine": "ours", "wall_s": 0.1871}
+{"graph": "../data/sx-mathoverflow.txt", "n": 24759, "m": 187986, "k": 1, "omega": 30, "heur": 30, "kept": 1584, "time": 0.0597, "nodes": 4750, "sub": 1546, "valid": 1, "engine": "ours", "wall_s": 0.0597}
+{"graph": "../data/sx-mathoverflow.txt", "n": 24759, "m": 187986, "k": 2, "omega": 34, "heur": 34, "kept": 1454, "time": 0.2329, "nodes": 290100, "sub": 716, "valid": 1, "engine": "ours", "wall_s": 0.2329}
+{"graph": "../data/sx-mathoverflow.txt", "n": 24759, "m": 187986, "k": 3, "omega": 39, "heur": 36, "kept": 1404, "time": 1.2511, "nodes": 1713210, "sub": 701, "valid": 1, "engine": "ours", "wall_s": 1.2511}
+{"graph": "../data/sx-askubuntu.txt", "n": 157222, "m": 455691, "k": 1, "omega": 23, "heur": 23, "kept": 1834, "time": 0.0415, "nodes": 100, "sub": 1774, "valid": 1, "engine": "ours", "wall_s": 0.0415}
+{"graph": "../data/sx-askubuntu.txt", "n": 157222, "m": 455691, "k": 2, "omega": 26, "heur": 26, "kept": 1512, "time": 0.0464, "nodes": 7865, "sub": 411, "valid": 1, "engine": "ours", "wall_s": 0.0464}
+{"graph": "../data/sx-askubuntu.txt", "n": 157222, "m": 455691, "k": 3, "omega": 28, "heur": 27, "kept": 1512, "time": 0.0642, "nodes": 39779, "sub": 452, "valid": 1, "engine": "ours", "wall_s": 0.0642}
+{"graph": "../data/com-dblp.ungraph.txt", "n": 317080, "m": 1049866, "k": 1, "omega": 114, "heur": 114, "kept": 0, "time": 0.0232, "nodes": 0, "sub": 0, "valid": 1, "engine": "ours", "wall_s": 0.0232}
+{"graph": "../data/com-dblp.ungraph.txt", "n": 317080, "m": 1049866, "k": 2, "omega": 114, "heur": 114, "kept": 114, "time": 0.0253, "nodes": 0, "sub": 0, "valid": 1, "engine": "ours", "wall_s": 0.0253}
+{"graph": "../data/com-dblp.ungraph.txt", "n": 317080, "m": 1049866, "k": 3, "omega": 114, "heur": 114, "kept": 114, "time": 0.0256, "nodes": 0, "sub": 0, "valid": 1, "engine": "ours", "wall_s": 0.0256}
+{"graph": "../data/com-youtube.ungraph.txt", "n": 1134890, "m": 2987624, "k": 1, "omega": 17, "heur": 17, "kept": 24515, "time": 0.3041, "nodes": 578, "sub": 24048, "valid": 1, "engine": "ours", "wall_s": 0.3041}
+{"graph": "../data/com-youtube.ungraph.txt", "n": 1134890, "m": 2987624, "k": 2, "omega": 20, "heur": 19, "kept": 22388, "time": 0.6539, "nodes": 70807, "sub": 4245, "valid": 1, "engine": "ours", "wall_s": 0.6539}
+{"graph": "../data/com-youtube.ungraph.txt", "n": 1134890, "m": 2987624, "k": 3, "omega": 21, "heur": 20, "kept": 22388, "time": 0.9701, "nodes": 519146, "sub": 4809, "valid": 1, "engine": "ours", "wall_s": 0.9701}
+{"graph": "../data/wiki-Talk.txt", "n": 2394385, "m": 4659565, "k": 1, "omega": 26, "heur": 26, "kept": 14888, "time": 1.0151, "nodes": 734335, "sub": 14786, "valid": 1, "engine": "ours", "wall_s": 1.0151}
+{"graph": "../data/wiki-Talk.txt", "n": 2394385, "m": 4659565, "k": 2, "omega": 32, "heur": 30, "kept": 12590, "time": 21.351, "nodes": 22499715, "sub": 3616, "valid": 1, "engine": "ours", "wall_s": 21.351}
+{"graph": "../data/wiki-Talk.txt", "n": 2394385, "m": 4659565, "k": 3, "omega": 36, "heur": 34, "kept": 10767, "time": 241.4759, "nodes": 151568687, "sub": 3254, "valid": 1, "engine": "ours", "wall_s": 241.4759}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":1,"engine":"mcbrb","omega":20,"wall_s":0.0151,"own_s":0.0000,"write_s":0.0029}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":1,"engine":"pmc","omega":20,"wall_s":0.0863,"own_s":-1.0000,"write_s":0.0146}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":2,"engine":"kplexs","omega":22,"wall_s":0.0340,"own_s":0.0277,"write_s":0.0030}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":2,"engine":"kplext","omega":22,"wall_s":0.0340,"own_s":0.0281,"write_s":0.0036}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":2,"engine":"kpex","omega":22,"wall_s":0.0240,"own_s":0.0195,"write_s":0.0028}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":3,"engine":"kplexs","omega":24,"wall_s":0.0327,"own_s":0.0273,"write_s":0.0029}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":3,"engine":"kplext","omega":24,"wall_s":0.0321,"own_s":0.0270,"write_s":0.0028}
+{"graph":"../data/email-Enron.txt","n":36692,"m":183831,"k":3,"engine":"kpex","omega":24,"wall_s":0.0182,"own_s":0.0150,"write_s":0.0026}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":1,"engine":"mcbrb","omega":57,"wall_s":0.0063,"own_s":0.0000,"write_s":0.0024}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":1,"engine":"pmc","omega":57,"wall_s":0.0547,"own_s":-1.0000,"write_s":0.0153}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":2,"engine":"kplexs","omega":57,"wall_s":0.0063,"own_s":0.0013,"write_s":0.0023}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":2,"engine":"kplext","omega":57,"wall_s":0.0062,"own_s":0.0014,"write_s":0.0032}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":2,"engine":"kpex","omega":57,"wall_s":0.0057,"own_s":0.0018,"write_s":0.0024}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":3,"engine":"kplexs","omega":57,"wall_s":0.0065,"own_s":0.0017,"write_s":0.0035}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":3,"engine":"kplext","omega":57,"wall_s":0.0062,"own_s":0.0015,"write_s":0.0025}
+{"graph":"../data/ca-AstroPh.txt","n":18771,"m":198050,"k":3,"engine":"kpex","omega":57,"wall_s":0.0063,"own_s":0.0024,"write_s":0.0023}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":1,"engine":"mcbrb","omega":23,"wall_s":0.0418,"own_s":0.0000,"write_s":0.0067}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":1,"engine":"pmc","omega":23,"wall_s":0.2208,"own_s":-1.0000,"write_s":0.0279}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":2,"engine":"kplexs","omega":28,"wall_s":0.3989,"own_s":0.3911,"write_s":0.0069}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":2,"engine":"kplext","omega":28,"wall_s":0.1740,"own_s":0.1667,"write_s":0.0055}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":2,"engine":"kpex","omega":28,"wall_s":0.0735,"own_s":0.0692,"write_s":0.0066}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":3,"engine":"kplexs","omega":32,"wall_s":0.3282,"own_s":0.3205,"write_s":0.0062}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":3,"engine":"kplext","omega":32,"wall_s":0.1214,"own_s":0.1137,"write_s":0.0059}
+{"graph":"../data/soc-Epinions1.txt","n":75879,"m":405740,"k":3,"engine":"kpex","omega":32,"wall_s":0.0565,"own_s":0.0520,"write_s":0.0060}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":1,"engine":"mcbrb","omega":30,"wall_s":0.0290,"own_s":0.0000,"write_s":0.0029}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":1,"engine":"pmc","omega":30,"wall_s":0.1066,"own_s":-1.0000,"write_s":0.0132}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":2,"engine":"kplexs","omega":34,"wall_s":3.1298,"own_s":3.1245,"write_s":0.0024}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":2,"engine":"kplext","omega":34,"wall_s":1.1240,"own_s":1.1184,"write_s":0.0027}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":2,"engine":"kpex","omega":34,"wall_s":0.2272,"own_s":0.2228,"write_s":0.0022}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":3,"engine":"kplexs","omega":39,"wall_s":8.8078,"own_s":8.8021,"write_s":0.0023}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":3,"engine":"kplext","omega":39,"wall_s":0.8817,"own_s":0.8757,"write_s":0.0022}
+{"graph":"../data/sx-mathoverflow.txt","n":24759,"m":187986,"k":3,"engine":"kpex","omega":39,"wall_s":0.1153,"own_s":0.1106,"write_s":0.0022}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":1,"engine":"mcbrb","omega":23,"wall_s":0.0236,"own_s":0.0000,"write_s":0.0136}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":1,"engine":"pmc","omega":23,"wall_s":0.2346,"own_s":-1.0000,"write_s":0.0332}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":2,"engine":"kplexs","omega":26,"wall_s":0.0435,"own_s":0.0329,"write_s":0.0111}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":2,"engine":"kplext","omega":26,"wall_s":0.0331,"own_s":0.0223,"write_s":0.0099}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":2,"engine":"kpex","omega":26,"wall_s":0.0237,"own_s":0.0191,"write_s":0.0097}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":3,"engine":"kplexs","omega":28,"wall_s":0.0565,"own_s":0.0456,"write_s":0.0100}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":3,"engine":"kplext","omega":28,"wall_s":0.0359,"own_s":0.0256,"write_s":0.0103}
+{"graph":"../data/sx-askubuntu.txt","n":157222,"m":455691,"k":3,"engine":"kpex","omega":28,"wall_s":0.0288,"own_s":0.0239,"write_s":0.0094}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":1,"engine":"mcbrb","omega":114,"wall_s":0.0207,"own_s":0.0000,"write_s":0.0273}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":1,"engine":"pmc","omega":114,"wall_s":0.4094,"own_s":-1.0000,"write_s":0.0801}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":2,"engine":"kplexs","omega":114,"wall_s":0.0200,"own_s":0.0048,"write_s":0.0228}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":2,"engine":"kplext","omega":114,"wall_s":0.0234,"own_s":0.0050,"write_s":0.0208}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":2,"engine":"kpex","omega":114,"wall_s":0.0141,"own_s":0.0083,"write_s":0.0212}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":3,"engine":"kplexs","omega":114,"wall_s":0.0230,"own_s":0.0048,"write_s":0.0208}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":3,"engine":"kplext","omega":114,"wall_s":0.0215,"own_s":0.0052,"write_s":0.0234}
+{"graph":"../data/com-dblp.ungraph.txt","n":317080,"m":1049866,"k":3,"engine":"kpex","omega":114,"wall_s":0.0157,"own_s":0.0092,"write_s":0.0209}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":1,"engine":"mcbrb","omega":17,"wall_s":0.1409,"own_s":0.0000,"write_s":0.0732}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":1,"engine":"pmc","omega":17,"wall_s":2.0895,"own_s":-1.0000,"write_s":0.2081}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":2,"engine":"kplexs","omega":20,"wall_s":0.3591,"own_s":0.3150,"write_s":0.0702}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":2,"engine":"kplext","omega":20,"wall_s":0.2828,"own_s":0.2360,"write_s":0.0676}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":2,"engine":"kpex","omega":20,"wall_s":0.1406,"own_s":0.1312,"write_s":0.0670}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":3,"engine":"kplexs","omega":21,"wall_s":0.4205,"own_s":0.3790,"write_s":0.0660}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":3,"engine":"kplext","omega":21,"wall_s":0.2640,"own_s":0.2222,"write_s":0.0684}
+{"graph":"../data/com-youtube.ungraph.txt","n":1134890,"m":2987624,"k":3,"engine":"kpex","omega":21,"wall_s":0.1594,"own_s":0.1508,"write_s":0.0695}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":1,"engine":"mcbrb","omega":26,"wall_s":0.4678,"own_s":0.0000,"write_s":0.1336}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":1,"engine":"pmc","omega":26,"wall_s":3.4754,"own_s":-1.0000,"write_s":0.3299}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":2,"engine":"kplexs","omega":32,"wall_s":1301.2262,"own_s":1301.2160,"write_s":0.1236}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":2,"engine":"kplext","omega":32,"wall_s":138.5114,"own_s":138.4105,"write_s":0.1600}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":2,"engine":"kpex","omega":32,"wall_s":8.5311,"own_s":8.4966,"write_s":0.1314}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":3,"engine":"kplext","omega":36,"wall_s":302.2527,"own_s":302.1748,"write_s":0.1698}
+{"graph":"../data/wiki-Talk.txt","n":2394385,"m":4659565,"k":3,"engine":"kpex","omega":36,"wall_s":5.7603,"own_s":5.7399,"write_s":0.1793}

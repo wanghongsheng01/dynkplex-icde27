@@ -1,0 +1,6 @@
+{"graph":"../data/soc-pokec-relationships.txt","n":1632803,"m":22301964,"k":1,"engine":"pmc","omega":29,"wall_s":14.6601,"own_s":-1.0000,"write_s":1.6163}
+{"graph":"../data/soc-pokec-relationships.txt","n":1632803,"m":22301964,"k":1,"engine":"mcbrb","omega":29,"wall_s":1.0173,"own_s":0.8695,"write_s":0.2240}
+{"graph":"../data/soc-pokec-relationships.txt","n":1632803,"m":22301964,"k":2,"engine":"kpex","omega":31,"wall_s":1.4769,"own_s":1.4506,"write_s":0.2240}
+{"graph":"../data/soc-pokec-relationships.txt","n":1632803,"m":22301964,"k":2,"engine":"kplext","omega":31,"wall_s":2.0470,"own_s":1.8921,"write_s":0.2269}
+{"graph":"../data/soc-pokec-relationships.txt","n":1632803,"m":22301964,"k":3,"engine":"kpex","omega":32,"wall_s":1.3956,"own_s":1.3697,"write_s":0.2269}
+{"graph":"../data/soc-pokec-relationships.txt","n":1632803,"m":22301964,"k":3,"engine":"kplext","omega":32,"wall_s":2.0379,"own_s":1.8829,"write_s":0.2299}
